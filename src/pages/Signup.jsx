@@ -44,37 +44,29 @@ const Signup = () => {
   }, [navigate]);
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError('');
-    
     try {
       const provider = new GoogleAuthProvider();
-      provider.addScope('profile');
-      provider.addScope('email');
-      
-      // Use signInWithPopup instead of redirect
       const result = await signInWithPopup(auth, provider);
-      console.log("Sign-in result:", result);
       
-      // Check Firestore for user record
-      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      // Check if user exists in Firestore
+      const userDoc = await getDoc(doc(db, "users", result.user.uid));
       
       if (!userDoc.exists()) {
+        // Store user data in state (shows payment button)
         setUserData({
           uid: result.user.uid,
-          displayName: result.user.displayName,
           email: result.user.email,
-          photoURL: result.user.photoURL
+          displayName: result.user.displayName,
         });
-        setSuccess('Authentication successful! Complete your registration.');
+        
+        // Stay on /signup (payment button appears)
+        setSuccess("Google auth successful! Complete payment.");
       } else {
-        navigate('/dashboard');
+        // Existing user → go to dashboard
+        navigate("/dashboard");
       }
     } catch (error) {
-      console.error("Authentication error:", error);
-      setError('Failed to sign in. Please try again.');
-    } finally {
-      setLoading(false);
+      setError("Google sign-in failed. Try again.");
     }
   };
 
