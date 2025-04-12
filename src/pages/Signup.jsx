@@ -83,7 +83,7 @@ const Signup = () => {
   
       const amountInPaise = 1 * 100; // ₹1 in paise
   
-      const orderResponse = await fetch('/api/create-razorpay-order', {
+      const orderResponse = await fetch('https://music-course.onrender.com/create-razorpay-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -113,7 +113,7 @@ const Signup = () => {
         order_id: orderData.order.id,
         handler: async (response) => {
           try {
-            const verificationResponse = await fetch('/api/verify-payment', {
+            const verificationResponse = await fetch('https://music-course.onrender.com/verify-payment', {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
