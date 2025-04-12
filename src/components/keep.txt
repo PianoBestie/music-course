@@ -1,0 +1,83 @@
+      {/* Hero Section */}
+      <div className="p-10 bg-gradient-to-tr from-[#7897a9] to-[#446fbf] text-white text-center">
+        <h1 className="text-5xl font-poppins font-bold tracking-wide">
+          Master Piano with Our Interactive Lessons
+        </h1>
+        <p className="mt-3 text-xl font-montserrat">
+          Learn both **Western Piano** techniques and **Classical Indian Piano** with a step-by-step approach.
+        </p>
+      </div>
+
+      {/* Western Piano Section */}
+      <div className="p-8 md:p-12 space-y-8">
+        <h2 className="text-3xl font-semibold font-playfair text-center text-gray-800">Western Piano Lessons 🎶</h2>
+
+        {/* Western Piano Fundamentals */}
+        <div className="bg-white shadow-xl rounded-lg p-6 border-l-4 border-blue-500">
+          <h3 className="text-2xl font-semibold text-[#446fbf] font-raleway">🎹 Western Piano Fundamentals</h3>
+          <p className="text-gray-600 mt-2 font-dmsans">
+            Get started with the **basics of piano playing**: learn about **hand posture**, **finger positioning**, and **basic scales**. Understand **musical notation** and how to read music.
+          </p>
+        </div>
+
+        {/* Western Piano Technique */}
+        <div className="bg-white shadow-xl rounded-lg p-6 border-l-4 border-yellow-500">
+          <h3 className="text-2xl font-semibold text-[#446fbf] font-raleway">🎶 Western Piano Technique</h3>
+          <p className="text-gray-600 mt-2 font-dmsans">
+            Focus on **developing your finger strength**, **dexterity**, and **independence**. Master **chords, scales**, and **arpeggios**, and progress from **beginner** to **intermediate** levels.
+          </p>
+        </div>
+
+        {/* Western Music Theory for Piano */}
+        <div className="bg-white shadow-xl rounded-lg p-6 border-l-4 border-green-500">
+          <h3 className="text-2xl font-semibold text-[#446fbf] font-raleway">🎼 Western Music Theory for Piano</h3>
+          <p className="text-gray-600 mt-2 font-dmsans">
+            Learn **Western music theory** specific to piano: **key signatures**, **time signatures**, and **musical intervals**. Apply these concepts to play **classical piano pieces** and modern music.
+          </p>
+        </div>
+
+        {/* Western Piano Composition */}
+        <div className="bg-white shadow-xl rounded-lg p-6 border-l-4 border-purple-500">
+          <h3 className="text-2xl font-semibold text-[#446fbf] font-raleway">🎹 Western Piano Composition</h3>
+          <p className="text-gray-600 mt-2 font-dmsans">
+            Explore **piano composition**: understand how to create melodies, harmonies, and structure your own piano pieces. Learn about **counterpoint** and **chord progressions** to compose original works.
+          </p>
+        </div>
+      </div>
+
+      {/* Classical Indian Piano Section */}
+      <div className="p-8 md:p-12 space-y-8 bg-gray-100">
+        <h2 className="text-3xl font-semibold font-playfair text-center text-gray-800">Classical Indian Piano Lessons 🎹</h2>
+
+        {/* Classical Indian Raga Piano */}
+        <div className="bg-white shadow-xl rounded-lg p-6 border-l-4 border-pink-500">
+          <h3 className="text-2xl font-semibold text-[#446fbf] font-raleway">🎶 Classical Indian Raga on Piano</h3>
+          <p className="text-gray-600 mt-2 font-dmsans">
+            Discover how to play **Indian ragas** on the piano: understand the **structure of ragas** and **how to play them** with the right mood and emotion. Learn about **Arohana (ascending)** and **Avarohana (descending)** for each raga.
+          </p>
+        </div>
+
+        {/* Classical Indian Taal for Piano */}
+        <div className="bg-white shadow-xl rounded-lg p-6 border-l-4 border-orange-500">
+          <h3 className="text-2xl font-semibold text-[#446fbf] font-raleway">🎼 Classical Indian Taal for Piano</h3>
+          <p className="text-gray-600 mt-2 font-dmsans">
+            Master the concept of **Taal (rhythmic cycles)**, and how to integrate them into piano performance. Explore various **Indian rhythmic cycles** such as **Teentaal** and **Jhaptaal**, and apply them in your piano playing.
+          </p>
+        </div>
+
+        {/* Classical Indian Piano Technique */}
+        <div className="bg-white shadow-xl rounded-lg p-6 border-l-4 border-teal-500">
+          <h3 className="text-2xl font-semibold text-[#446fbf] font-raleway">🎹 Classical Indian Piano Technique</h3>
+          <p className="text-gray-600 mt-2 font-dmsans">
+            Focus on improving your **piano technique** for Indian classical music. Learn **ornamentation (Gamaka)** and **improvisation (Alap)** in the context of piano performance.
+          </p>
+        </div>
+
+        {/* Classical Indian Piano Composition */}
+        <div className="bg-white shadow-xl rounded-lg p-6 border-l-4 border-indigo-500">
+          <h3 className="text-2xl font-semibold text-[#446fbf] font-raleway">🎶 Classical Indian Piano Composition</h3>
+          <p className="text-gray-600 mt-2 font-dmsans">
+            Compose and perform your own **Indian classical piano compositions**. Understand how to integrate **ragas**, **taals**, and **improvisation** to create original and expressive works on the piano.
+          </p>
+        </div>
+      </div>
