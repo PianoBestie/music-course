@@ -105,7 +105,7 @@ const Signup = () => {
 
   
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: "rzp_test_vTXBgsrLhU2Mcg",
         amount: orderData.order.amount,
         currency: 'INR',
         name: 'Piano Bestie',
