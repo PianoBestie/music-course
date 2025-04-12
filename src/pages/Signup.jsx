@@ -5,6 +5,7 @@ import { CircularProgress, Alert, Button } from '@mui/material';
 import { 
   GoogleAuthProvider, 
   signInWithRedirect,
+  signInWithPopup
   getRedirectResult,
   onAuthStateChanged
 } from 'firebase/auth';
