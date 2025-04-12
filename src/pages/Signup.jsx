@@ -125,7 +125,7 @@ const Signup = () => {
   
       // 3. Initialize Razorpay checkout
       const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID || "rzp_test_vTXBgsrLhU2Mcg",
+        key: "rzp_test_vTXBgsrLhU2Mcg",
         amount: orderData.order.amount,
         currency: 'INR',
         name: 'Piano Bestie',
