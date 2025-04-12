@@ -28,6 +28,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({
   origin:process.env.FRONTEND_URL,
+  'https://github.com/PianoBestie/music-course/',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
