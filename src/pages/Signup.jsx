@@ -19,6 +19,64 @@ const Signup = () => {
   const [success, setSuccess] = useState('');
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("Auth state changed:", user);
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+          setUserData({
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL
+          });
+          setSuccess('Google authentication successful!');
+        } else {
+          navigate('/dashboard');
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [navigate]);
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+      
+      // Use signInWithPopup instead of redirect
+      const result = await signInWithPopup(auth, provider);
+      console.log("Sign-in result:", result);
+      
+      // Check Firestore for user record
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      
+      if (!userDoc.exists()) {
+        setUserData({
+          uid: result.user.uid,
+          displayName: result.user.displayName,
+          email: result.user.email,
+          photoURL: result.user.photoURL
+        });
+        setSuccess('Authentication successful! Complete your registration.');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+      setError('Failed to sign in. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -208,25 +266,7 @@ const Signup = () => {
       setError(`Failed to complete registration: ${err.message}`);
     }
   };
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-    
-    try {
-      const provider = new GoogleAuthProvider();
-      // Add any additional scopes you need
-      provider.addScope('profile');
-      provider.addScope('email');
-      
-      await signInWithRedirect(auth, provider);
-    } catch (err) {
-      setError(getFirebaseErrorMessage(err.code));
-      console.error('Google auth error:', err);
-      setLoading(false);
-    }
-  };
-
+ 
   const getFirebaseErrorMessage = (code) => {
     switch (code) {
       case 'auth/popup-closed-by-user':

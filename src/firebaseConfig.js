@@ -1,8 +1,13 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { 
+  getAuth, 
+  setPersistence, 
+  browserSessionPersistence,
+  browserLocalPersistence,
+  GoogleAuthProvider
+} from "firebase/auth";
 
-// Production and development configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBwkGEcfpoq_KzqTNS2EbKj5t4APtRgrW4",
   authDomain: "interactive-music.firebaseapp.com",
@@ -17,27 +22,49 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Enhanced configuration for production
-if (process.env.NODE_ENV === 'production') {
-  // Production-specific settings
-  auth.languageCode = 'en'; // Set default language
-  
-  // Optional: Persistence settings
-  // setPersistence(auth, browserSessionPersistence);
-  
-  console.log('Firebase running in production mode');
-} else {
-  console.log('Firebase running in development mode');
-  
-  // Connect to Firestore emulator if running locally
-  if (window.location.hostname === 'localhost') {
-    import('firebase/firestore').then(({ connectFirestoreEmulator }) => {
-      connectFirestoreEmulator(db, 'localhost', 8080);
-      console.log('Connected to Firestore emulator');
-    }).catch(err => {
-      console.warn('Failed to connect to Firestore emulator:', err);
-    });
-  }
-}
+// Configure authentication provider
+const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('profile');
+googleProvider.addScope('email');
 
-export { db, auth };
+// Enhanced configuration with error handling
+const configureFirebase = async () => {
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Firebase running in production mode');
+      
+      // Set persistence for production (local storage works better with GitHub Pages)
+      await setPersistence(auth, browserLocalPersistence);
+      
+      // Additional production settings
+      auth.languageCode = 'en';
+      auth.settings.appVerificationDisabledForTesting = false;
+      
+    } else {
+      console.log('Firebase running in development mode');
+      
+      // Use session persistence for development
+      await setPersistence(auth, browserSessionPersistence);
+      
+      // Emulator connection
+      if (window.location.hostname === 'localhost') {
+        const { connectFirestoreEmulator } = await import('firebase/firestore');
+        const { connectAuthEmulator } = await import('firebase/auth');
+        
+        connectFirestoreEmulator(db, 'localhost', 8080);
+        connectAuthEmulator(auth, "http://localhost:9099");
+        console.log('Connected to Firebase emulators');
+      }
+    }
+  } catch (error) {
+    console.error('Firebase configuration error:', error);
+    throw error; // Re-throw to handle in calling code
+  }
+};
+
+// Initialize configuration
+configureFirebase().catch((error) => {
+  console.error('Failed to configure Firebase:', error);
+});
+
+export { db, auth, googleProvider };
