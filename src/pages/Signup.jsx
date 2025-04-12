@@ -4,9 +4,7 @@ import { Google } from '@mui/icons-material';
 import { CircularProgress, Alert, Button } from '@mui/material';
 import { 
   GoogleAuthProvider, 
-  signInWithRedirect,
   signInWithPopup,
-  getRedirectResult,
   onAuthStateChanged
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -44,99 +42,70 @@ const Signup = () => {
   }, [navigate]);
 
   const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
-      // Check if user exists in Firestore
       const userDoc = await getDoc(doc(db, "users", result.user.uid));
       
       if (!userDoc.exists()) {
-        // Store user data in state (shows payment button)
         setUserData({
           uid: result.user.uid,
           email: result.user.email,
           displayName: result.user.displayName,
+          photoURL: result.user.photoURL
         });
-        
-        // Stay on /signup (payment button appears)
         setSuccess("Google auth successful! Complete payment.");
       } else {
-        // Existing user → go to dashboard
         navigate("/dashboard");
       }
     } catch (error) {
-      setError("Google sign-in failed. Try again.");
-    }
-  };
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        checkUserRegistration(user);
-      }
-    });
-
-    // Handle redirect result
-    const handleRedirect = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          checkUserRegistration(result.user);
-        }
-      } catch (err) {
-        setError(getFirebaseErrorMessage(err.code));
-        console.error('Redirect error:', err);
-      }
-    };
-
-    handleRedirect();
-
-    return () => unsubscribe();
-  }, []);
-
-  const checkUserRegistration = async (user) => {
-    const userDocRef = doc(db, 'users', user.uid);
-    const userDoc = await getDoc(userDocRef);
-    
-    if (!userDoc.exists()) {
-      setUserData({
-        uid: user.uid,
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL
-      });
-      setSuccess('Google authentication successful! Please complete payment to finish registration.');
-    } else {
-      setSuccess("Welcome back to Piano Bestie! You are already signed in.");
-      // Redirect to dashboard or home page
+      setError(getFirebaseErrorMessage(error.code));
+      console.error("Google sign-in error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
+      if (window.Razorpay) {
+        return resolve(true);
+      }
+      
       const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/api/v1/checkout.js';
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
+      script.onerror = () => {
+        console.error('Failed to load Razorpay SDK');
+        resolve(false);
+      };
       document.body.appendChild(script);
     });
   };
+
   const handlePayment = async () => {
     try {
       setPaymentLoading(true);
       setError('');
       
+      // 1. Load Razorpay SDK
       const isScriptLoaded = await loadRazorpayScript();
       if (!isScriptLoaded) {
-        throw new Error('Failed to load Razorpay SDK');
+        throw new Error('Failed to load payment gateway');
       }
-  
+
+      // 2. Create order on backend
       const amountInPaise = 1 * 100; // ₹1 in paise
-  
       const orderResponse = await fetch('https://music-course.onrender.com/api/create-razorpay-order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
         body: JSON.stringify({ 
           amount: amountInPaise,
           notes: { 
@@ -153,10 +122,10 @@ const Signup = () => {
       }
   
       const orderData = await orderResponse.json();
-
   
+      // 3. Initialize Razorpay checkout
       const options = {
-        key: "rzp_test_vTXBgsrLhU2Mcg",
+        key: process.env.REACT_APP_RAZORPAY_KEY_ID || "rzp_test_vTXBgsrLhU2Mcg",
         amount: orderData.order.amount,
         currency: 'INR',
         name: 'Piano Bestie',
@@ -164,11 +133,12 @@ const Signup = () => {
         order_id: orderData.order.id,
         handler: async (response) => {
           try {
+            // 4. Verify payment on backend
             const verificationResponse = await fetch('https://music-course.onrender.com/api/verify-payment', {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
               },
               body: JSON.stringify({
                 razorpay_order_id: response.razorpay_order_id,
@@ -191,6 +161,7 @@ const Signup = () => {
               setError('Payment verification failed');
             }
           } catch (err) {
+            console.error('Payment verification error:', err);
             setError(err.message);
           } finally {
             setPaymentLoading(false);
@@ -198,24 +169,34 @@ const Signup = () => {
         },
         prefill: {
           name: userData.displayName,
-          email: userData.email
+          email: userData.email,
+          contact: '' // Add if you collect phone numbers
         },
-        theme: { color: '#81479a' }
+        theme: { 
+          color: '#81479a'
+        },
+        modal: {
+          ondismiss: () => {
+            setPaymentLoading(false);
+            setError('Payment window closed');
+          }
+        }
       };
   
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
+      console.error('Payment processing error:', error);
       setError(error.message || 'Payment processing failed');
       setPaymentLoading(false);
     }
   };
 
-  const completeRegistration = async (paymentDetails = null) => {
+  const completeRegistration = async (paymentDetails) => {
     try {
       const userDataToSave = {
         name: userData.displayName,
-        uid:userData.uid,
+        uid: userData.uid,
         email: userData.email,
         photoURL: userData.photoURL,
         createdAt: new Date(),
@@ -224,34 +205,24 @@ const Signup = () => {
         role: 'user',
         status: 'active',
         provider: 'google',
-        paymentStatus: paymentDetails ? 'verified' : 'pending',
-        paymentMethod: paymentDetails ? 'razorpay' : null,
-        ...(paymentDetails && {
-          paymentDate: new Date(),
-          paymentDetails: {
-            razorpayOrderId: paymentDetails.razorpay_order_id,
-            razorpayPaymentId: paymentDetails.razorpay_payment_id,
-            razorpaySignature: paymentDetails.razorpay_signature,
-            amount: 1,
-            currency: 'INR'
-          }
-        })
+        paymentStatus: 'verified',
+        paymentMethod: 'razorpay',
+        paymentDate: new Date(),
+        paymentDetails: {
+          razorpayOrderId: paymentDetails.razorpay_order_id,
+          razorpayPaymentId: paymentDetails.razorpay_payment_id,
+          razorpaySignature: paymentDetails.razorpay_signature,
+          amount: 1,
+          currency: 'INR'
+        }
       };
   
-      // Add debug logging
-      console.log('Saving to Firestore:', {
-        collection: 'users',
-        id: userData.uid,
-        data: userDataToSave
-      });
-  
       await setDoc(doc(db, 'users', userData.uid), userDataToSave);
-  
       setSuccess('Registration and payment successful! Redirecting...');
       
-      // Add a small delay before redirect to ensure data is saved
+      // Small delay to ensure data is saved
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        navigate('/dashboard', { replace: true });
       }, 1000);
   
     } catch (err) {
