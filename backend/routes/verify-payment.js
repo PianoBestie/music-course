@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import express from 'express';
 import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../src/firebaseConfig.js';
+import { db } from '../firebaseConfig.js';
 
 // Load .env (ensure file is in project root)
 dotenv.config();
