@@ -116,7 +116,7 @@ const Signup = () => {
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.src = 'https://checkout.razorpay.com/api/v1/checkout.js';
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
@@ -134,7 +134,7 @@ const Signup = () => {
   
       const amountInPaise = 1 * 100; // ₹1 in paise
   
-      const orderResponse = await fetch('https://music-course.onrender.com/create-razorpay-order', {
+      const orderResponse = await fetch('https://music-course.onrender.com/api/create-razorpay-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -164,7 +164,7 @@ const Signup = () => {
         order_id: orderData.order.id,
         handler: async (response) => {
           try {
-            const verificationResponse = await fetch('https://music-course.onrender.com/verify-payment', {
+            const verificationResponse = await fetch('https://music-course.onrender.com/api/verify-payment', {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
