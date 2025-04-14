@@ -22,11 +22,9 @@ const Signup = () => {
 
   // Check for payment success redirect
   useEffect(() => {
-    const paymentRequestId = searchParams.get('payment_request_id');
-    const paymentId = searchParams.get('payment_id');
-    
-    if (paymentRequestId && paymentId && auth.currentUser) {
-      verifyAndCompleteRegistration(paymentRequestId, paymentId);
+    const uid = searchParams.get('uid');
+    if (uid && auth.currentUser?.uid === uid) {
+      checkPaymentStatus();
     }
   }, [searchParams]);
 
@@ -48,9 +46,27 @@ const Signup = () => {
         }
       }
     });
-
     return unsubscribe;
   }, [navigate]);
+
+  const checkPaymentStatus = async () => {
+    try {
+      setPaymentLoading(true);
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+      
+      if (userDoc.exists() && userDoc.data().paymentStatus === 'verified') {
+        navigate('/dashboard');
+      } else {
+        // Poll for payment status (webhook might be delayed)
+        setTimeout(checkPaymentStatus, 3000);
+      }
+    } catch (error) {
+      console.error('Payment check failed:', error);
+      setError('Payment verification in progress. Please refresh later.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -81,86 +97,40 @@ const Signup = () => {
     }
   };
 
-// React Signup Component - Simplified Payment Handling
-const handlePayment = () => {
-  setPaymentLoading(true);
-  // Redirect directly to Instamojo payment link
-  window.location.href = "https://imjo.in/cJPzkc"; // Your generated link
-};
-  const verifyAndCompleteRegistration = async (paymentRequestId, paymentId) => {
+  const handlePayment = async () => {
     try {
       setPaymentLoading(true);
+      setError('');
       
-      // Verify payment with backend
-      const verificationResponse = await fetch('https://music-course.onrender.com/api/verify-insta-payment', {
+      const response = await fetch('/api/create-payment-order', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
         },
         body: JSON.stringify({
-          payment_request_id: paymentRequestId,
-          payment_id: paymentId,
-          userId: auth.currentUser.uid
+          userId: userData.uid,
+          email: userData.email,
+          name: userData.displayName
         })
       });
 
-      if (!verificationResponse.ok) {
-        throw new Error('Payment verification failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create payment order');
       }
 
-      await completeRegistration(paymentRequestId, paymentId);
-      navigate('/dashboard');
+      const { payment_url } = await response.json();
+      window.location.href = payment_url;
 
     } catch (error) {
-      console.error('Payment verification error:', error);
-      setError(error.message || 'Payment verification failed');
+      console.error('Payment processing error:', error);
+      setError(error.message || 'Payment processing failed');
     } finally {
       setPaymentLoading(false);
     }
   };
 
-  const completeRegistration = async (paymentRequestId, paymentId) => {
-    try {
-      // Quick validation (recommended minimum)
-      if (!userData?.uid || !paymentRequestId || !paymentId) {
-        throw new Error('Missing required user or payment data');
-      }
-  
-      const userDataToSave = {
-        name: userData.displayName || '', // Fallback for empty name
-        uid: userData.uid,
-        email: userData.email || '',
-        photoURL: userData.photoURL || '',
-        createdAt: new Date(),
-        lastLogin: new Date(),
-        emailVerified: true,
-        role: 'user',
-        status: 'active',
-        provider: 'google',
-        paymentStatus: 'verified',
-        paymentMethod: 'instamojo',
-        paymentDate: new Date(),
-        paymentDetails: {
-          paymentRequestId,
-          paymentId,
-          amount: 599,
-          currency: 'INR'
-        }
-      };
-  
-      await setDoc(doc(db, 'users', userData.uid), userDataToSave);
-      setSuccess('Registration and payment successful!');
-  
-    } catch (err) {
-      console.error('Firestore write error:', {
-        error: err.message,
-        userId: userData?.uid,
-        paymentIds: { paymentRequestId, paymentId }
-      });
-      throw err; // Re-throw for calling function to handle
-    }
-  };
   const getFirebaseErrorMessage = (code) => {
     switch (code) {
       case 'auth/popup-closed-by-user':
@@ -174,7 +144,8 @@ const handlePayment = () => {
       default:
         return 'Sign in failed. Please try again.';
     }
-  }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -250,7 +221,7 @@ const handlePayment = () => {
                 
                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                   <p className="text-sm text-blue-700">
-                    <span className="font-semibold">Note:</span> A nominal ₹599 payment is required to complete registration.
+                    <span className="font-semibold">Note:</span> ₹599 for 1-year access to all piano courses
                   </p>
                 </div>
                 
@@ -282,7 +253,7 @@ const handlePayment = () => {
                       Processing Payment...
                     </>
                   ) : (
-                    'Pay ₹599 & Complete Registration'
+                    'Pay ₹599 & Get 1-Year Access'
                   )}
                 </button>
               </div>
