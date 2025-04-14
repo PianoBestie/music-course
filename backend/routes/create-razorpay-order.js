@@ -16,6 +16,7 @@ const razorpay = new Razorpay({
 router.post('/', async (req, res) => {
   try {
     const { amount, currency = 'INR', receipt, notes } = req.body;
+console.log(req.body);
 
     // Input validation
     if (!amount || isNaN(amount) || amount <= 0) {
