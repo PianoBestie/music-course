@@ -85,7 +85,7 @@ const Signup = () => {
 const handlePayment = () => {
   setPaymentLoading(true);
   // Redirect directly to Instamojo payment link
-  window.location.href = "https://imjo.in/MCEE3S"; // Your generated link
+  window.location.href = "https://imjo.in/Uxzx7z"; // Your generated link
 };
   const verifyAndCompleteRegistration = async (paymentRequestId, paymentId) => {
     try {
