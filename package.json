@@ -1,6 +1,6 @@
 {
   "name": "music-course",
-  "homepage": "https://pianobestie.github.io/music-course" ,
+  "homepage": "https://pianobestie.github.io/music-course",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist",
-  "predeploy": "npm run build"
+    "predeploy": "npm run build"
   },
   "dependencies": {
     "@cloudinary/react": "^1.14.1",
@@ -48,6 +48,7 @@
     "react-audio-player": "^0.17.0",
     "react-dom": "^19.0.0",
     "react-helmet": "^6.1.0",
+    "react-helmet-async": "^2.0.5",
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
     "react-piano": "^3.1.3",

@@ -13,7 +13,7 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
-    log("entered ")
+    log("entered")
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !userId) {
       return res.status(400).json({ 
         success: false,
