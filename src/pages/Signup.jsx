@@ -9,7 +9,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 const Signup = () => {
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,19 @@ const Signup = () => {
   const [success, setSuccess] = useState('');
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
+  // Check for payment success redirect
+  useEffect(() => {
+    const paymentRequestId = searchParams.get('payment_request_id');
+    const paymentId = searchParams.get('payment_id');
+    
+    if (paymentRequestId && paymentId && auth.currentUser) {
+      verifyAndCompleteRegistration(paymentRequestId, paymentId);
+    }
+  }, [searchParams]);
+
+  // Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -69,121 +81,34 @@ const Signup = () => {
     }
   };
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        return resolve(true);
-      }
-      
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => {
-        console.error('Failed to load Razorpay SDK');
-        resolve(false);
-      };
-      document.body.appendChild(script);
-    });
-  };
-
   const handlePayment = async () => {
     try {
       setPaymentLoading(true);
       setError('');
       
-      // 1. Load Razorpay SDK
-      const isScriptLoaded = await loadRazorpayScript();
-      if (!isScriptLoaded) {
-        throw new Error('Failed to load payment gateway');
-      }
-
-      // 2. Create order on backend
-      const amountInPaise = 1 * 100; // ₹1 in paise
-      const orderResponse = await fetch('https://music-course.onrender.com/api/create-razorpay-order', {
+      const response = await fetch('/api/create-insta-order', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
         },
-        body: JSON.stringify({ 
-          amount: amountInPaise,
-          notes: { 
-            name: userData.displayName, 
-            email: userData.email,
-            uid: userData.uid
-          }
+        body: JSON.stringify({
+          amount: 599,
+          purpose: 'Piano Course Access',
+          userId: userData.uid,
+          email: userData.email,
+          name: userData.displayName
         }),
       });
-  
-      if (!orderResponse.ok) {
-        const errorData = await orderResponse.json();
-        throw new Error(errorData.error || 'Failed to create order');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create payment order');
       }
-  
-      const orderData = await orderResponse.json();
-  
-      // 3. Initialize Razorpay checkout
-      const options = {
-        key: "rzp_test_vTXBgsrLhU2Mcg",
-        amount: orderData.order.amount,
-        currency: 'INR',
-        name: 'Piano Bestie',
-        description: 'Account Verification',
-        order_id: orderData.order.id,
-        handler: async (response) => {
-          try {
-            // 4. Verify payment on backend
-            const verificationResponse = await fetch('https://music-course.onrender.com/api/verify-payment', {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                userId: userData.uid
-              })
-            });
-  
-            if (!verificationResponse.ok) {
-              throw new Error('Payment verification failed');
-            }
-  
-            const verificationData = await verificationResponse.json();
-            
-            if (verificationData.success) {
-              await completeRegistration(response);
-              navigate('/dashboard');
-            } else {
-              setError('Payment verification failed');
-            }
-          } catch (err) {
-            console.error('Payment verification error:', err);
-            setError(err.message);
-          } finally {
-            setPaymentLoading(false);
-          }
-        },
-        prefill: {
-          name: userData.displayName,
-          email: userData.email,
-          contact: '' // Add if you collect phone numbers
-        },
-        theme: { 
-          color: '#81479a'
-        },
-        modal: {
-          ondismiss: () => {
-            setPaymentLoading(false);
-            setError('Payment window closed');
-          }
-        }
-      };
-  
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+
+      const data = await response.json();
+      window.location.href = data.payment_url;
+
     } catch (error) {
       console.error('Payment processing error:', error);
       setError(error.message || 'Payment processing failed');
@@ -191,7 +116,40 @@ const Signup = () => {
     }
   };
 
-  const completeRegistration = async (paymentDetails) => {
+  const verifyAndCompleteRegistration = async (paymentRequestId, paymentId) => {
+    try {
+      setPaymentLoading(true);
+      
+      // Verify payment with backend
+      const verificationResponse = await fetch('/api/verify-insta-payment', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+        },
+        body: JSON.stringify({
+          payment_request_id: paymentRequestId,
+          payment_id: paymentId,
+          userId: auth.currentUser.uid
+        })
+      });
+
+      if (!verificationResponse.ok) {
+        throw new Error('Payment verification failed');
+      }
+
+      await completeRegistration(paymentRequestId, paymentId);
+      navigate('/dashboard');
+
+    } catch (error) {
+      console.error('Payment verification error:', error);
+      setError(error.message || 'Payment verification failed');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const completeRegistration = async (paymentRequestId, paymentId) => {
     try {
       const userDataToSave = {
         name: userData.displayName,
@@ -205,31 +163,25 @@ const Signup = () => {
         status: 'active',
         provider: 'google',
         paymentStatus: 'verified',
-        paymentMethod: 'razorpay',
+        paymentMethod: 'instamojo',
         paymentDate: new Date(),
         paymentDetails: {
-          razorpayOrderId: paymentDetails.razorpay_order_id,
-          razorpayPaymentId: paymentDetails.razorpay_payment_id,
-          razorpaySignature: paymentDetails.razorpay_signature,
-          amount: 1,
+          paymentRequestId,
+          paymentId,
+          amount: 599,
           currency: 'INR'
         }
       };
-  
+
       await setDoc(doc(db, 'users', userData.uid), userDataToSave);
-      setSuccess('Registration and payment successful! Redirecting...');
-      
-      // Small delay to ensure data is saved
-      setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 1000);
-  
+      setSuccess('Registration and payment successful!');
+
     } catch (err) {
       console.error('Firestore write error:', err);
-      setError(`Failed to complete registration: ${err.message}`);
+      throw err;
     }
   };
- 
+
   const getFirebaseErrorMessage = (code) => {
     switch (code) {
       case 'auth/popup-closed-by-user':
@@ -243,8 +195,7 @@ const Signup = () => {
       default:
         return 'Sign in failed. Please try again.';
     }
-  };
-
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">

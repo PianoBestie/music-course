@@ -20,6 +20,7 @@
     "express-rate-limit": "^7.5.0",
     "firebase": "^11.6.0",
     "helmet": "^8.1.0",
+    "instamojo-nodejs": "^0.0.5",
     "razorpay": "^2.9.6"
   },
   "devDependencies": {
