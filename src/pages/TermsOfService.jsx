@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   CheckCircle, 
   Article, 
   PrivacyTip, 
-  MonetizationOn, 
-  LocalShipping, 
-  ContactSupport 
+  MonetizationOn,
+  ContactSupport,
+  Payment,
+  LocalShipping
 } from '@mui/icons-material';
 import { 
   Button, 
@@ -21,7 +22,8 @@ import {
   ListItemIcon, 
   ListItemText,
   CircularProgress,
-  Fade
+  Fade,
+  Link
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
@@ -33,51 +35,62 @@ const TermsOfService = () => {
   const [loading, setLoading] = useState(true);
   const [policies, setPolicies] = useState(null);
 
-  // Simulate fetching policies from backend
   useEffect(() => {
     const fetchPolicies = async () => {
       try {
-        // In a real app, this would be an API call to your backend
-        // which might fetch from Razorpay's API or your database
         const mockPolicies = {
-          terms: {
-            title: "Terms of Service",
+          ourTerms: {
+            title: "Piano Bestie Terms",
             content: [
-              "By accessing or using Piano Bestie ('Service'), you agree to be bound by these Terms.",
-              "The Service provides piano learning resources and requires account creation for full access.",
-              "You must be at least 13 years old to use this Service or have parental consent.",
-              "We reserve the right to modify these terms at any time with notice."
-            ],
-            razorpayLink: "https://razorpay.com/terms"
+              "Annual subscription fee: ₹599 (non-refundable after purchase)",
+              "Immediate access revocation upon cancellation",
+              "New ₹599 payment required to rejoin after cancellation",
+              "No prorated refunds for unused subscription time",
+              "Auto-renewal occurs 24 hours before subscription end date"
+            ]
           },
-          privacy: {
-            title: "Privacy Policy",
+          ourPrivacy: {
+            title: "Our Privacy Policy",
             content: [
-              "We collect personal data for account management and service improvement.",
-              "Payment data is processed securely through Razorpay and not stored on our servers.",
-              "We use cookies for essential functionality and analytics.",
-              "You may request data deletion by contacting our support team."
-            ],
-            razorpayLink: "https://razorpay.com/privacy"
+              "We collect only necessary account and usage data",
+              "Payment information processed securely via Razorpay",
+              "Data never sold to third parties",
+              "Account deletion available upon request"
+            ]
           },
-          refund: {
-            title: "Refund Policy",
+          razorpayTerms: {
+            title: "Payment Terms (via Razorpay)",
             content: [
-              "All subscriptions are non-refundable except where required by law.",
-              "Refund requests must be made within 14 days of payment.",
-              "Digital content purchases are final once accessed.",
-              "Chargebacks will result in immediate account termination."
+              "All transactions processed through Razorpay",
+              "Payment disputes must be handled through Razorpay",
+              "Refunds processed according to Razorpay's policies"
             ],
-            razorpayLink: "https://razorpay.com/refund-policy"
+            link: "https://merchant.razorpay.com/policy/QFLtWjASEokUUs/terms"
+          },
+          razorpayPrivacy: {
+            title: "Razorpay Privacy Policy",
+            content: [
+              "Razorpay collects payment information as needed",
+              "See their full privacy policy for details"
+            ],
+            link: "https://merchant.razorpay.com/policy/QFLtWjASEokUUs/privacy"
+          },
+          razorpayRefund: {
+            title: "Razorpay Refund Policy",
+            content: [
+              "Refunds processed according to Razorpay's timeline",
+              "All refunds subject to Razorpay's terms"
+            ],
+            link: "https://merchant.razorpay.com/policy/QFLtWjASEokUUs/refund"
           },
           contact: {
             title: "Contact Information",
             content: [
-              "For technical support: support@pianobestie.com",
-              "For billing inquiries: billing@pianobestie.com",
-              "For copyright claims: legal@pianobestie.com",
-              "Mailing address: Piano Bestie Inc, 123 Music Lane, San Francisco, CA"
-            ]
+              "Piano Bestie support: support@pianobestie.com",
+              "Razorpay support: via their contact page",
+              "Mailing address: Piano Bestie Inc, 123 Music Lane, Mumbai, India"
+            ],
+            razorpayContact: "https://merchant.razorpay.com/policy/QFLtWjASEokUUs/contact_us"
           }
         };
         
@@ -94,14 +107,13 @@ const TermsOfService = () => {
 
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    const bottomThreshold = 50; // pixels from bottom
+    const bottomThreshold = 50;
     const isBottom = scrollHeight - (scrollTop + clientHeight) < bottomThreshold;
     setScrolledToBottom(isBottom);
   };
 
   const handleAccept = () => {
     setAccepted(true);
-    // In a real app, you might store this acceptance in your database
     setTimeout(() => navigate('/signup'), 500);
   };
 
@@ -145,82 +157,96 @@ const TermsOfService = () => {
             }}
             onScroll={handleScroll}
           >
+            {/* Our Policies */}
             <Section 
-              icon={<Article color="primary" />}
-              title="1. Terms of Service"
-              content={policies.terms.content}
-              externalLink={policies.terms.razorpayLink}
-              linkText="View Razorpay's Terms"
+              icon={<MonetizationOn color="primary" />}
+              title="1. Piano Bestie Subscription Terms"
+              content={policies?.ourTerms.content}
             />
 
             <Section 
               icon={<PrivacyTip color="primary" />}
-              title="2. Privacy Policy"
-              content={policies.privacy.content}
-              externalLink={policies.privacy.razorpayLink}
+              title="2. Our Privacy Policy"
+              content={policies?.ourPrivacy.content}
+            />
+
+            {/* Razorpay Policies */}
+            <Section 
+              icon={<Payment color="primary" />}
+              title="3. Payment Processing Terms"
+              content={policies?.razorpayTerms.content}
+              externalLink={policies?.razorpayTerms.link}
+              linkText="View Razorpay's Full Terms"
+            />
+
+            <Section 
+              icon={<PrivacyTip color="primary" />}
+              title="4. Payment Provider Privacy Policy"
+              content={policies?.razorpayPrivacy.content}
+              externalLink={policies?.razorpayPrivacy.link}
               linkText="View Razorpay's Privacy Policy"
             />
 
             <Section 
               icon={<MonetizationOn color="primary" />}
-              title="3. Payment & Refunds"
-              content={policies.refund.content}
-              externalLink={policies.refund.razorpayLink}
+              title="5. Refund Processing"
+              content={policies?.razorpayRefund.content}
+              externalLink={policies?.razorpayRefund.link}
               linkText="View Razorpay's Refund Policy"
             />
 
             <Section 
               icon={<ContactSupport color="primary" />}
-              title="4. Contact Information"
-              content={policies.contact.content}
+              title="6. Contact Information"
+              content={policies?.contact.content}
+              externalLink={policies?.contact.razorpayContact}
+              linkText="Contact Razorpay Support"
             />
 
             <Typography variant="body2" color="text.secondary" sx={{ mt: 4, fontStyle: 'italic' }}>
-              By continuing, you acknowledge that you have read and understood all terms and policies above.
+              By continuing, you agree to both Piano Bestie's terms and Razorpay's payment terms.
             </Typography>
           </Box>
 
           {policies && (
-  <Fade in={scrolledToBottom}>
-    <Box sx={{ 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      alignItems: 'center',
-      p: 2,
-      bgcolor: accepted ? 'success.light' : 'primary.light',
-      borderRadius: 1,
-      transition: 'all 0.3s ease'
-    }}>
-      <Box display="flex" alignItems="center">
-        <CheckCircle sx={{ mr: 1, color: accepted ? 'success.main' : 'primary.main' }} />
-        <Typography>
-          {accepted ? 'Terms Accepted!' : 'Please read all terms before continuing'}
-        </Typography>
-      </Box>
-      <Button
-        variant="contained"
-        size="large"
-        disabled={!scrolledToBottom || accepted}
-        onClick={handleAccept}
-        sx={{ minWidth: 120 }}
-      >
-        {accepted ? (
-          <CircularProgress size={24} color="inherit" />
-        ) : (
-          'I Accept'
-        )}
-      </Button>
-    </Box>
-  </Fade>
-)}
-
+            <Fade in={scrolledToBottom}>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                p: 2,
+                bgcolor: accepted ? 'success.light' : 'primary.light',
+                borderRadius: 1,
+                transition: 'all 0.3s ease'
+              }}>
+                <Box display="flex" alignItems="center">
+                  <CheckCircle sx={{ mr: 1, color: accepted ? 'success.main' : 'primary.main' }} />
+                  <Typography>
+                    {accepted ? 'Terms Accepted!' : 'Please read all terms before continuing'}
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  size="large"
+                  disabled={!scrolledToBottom || accepted}
+                  onClick={handleAccept}
+                  sx={{ minWidth: 120 }}
+                >
+                  {accepted ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    'I Accept'
+                  )}
+                </Button>
+              </Box>
+            </Fade>
+          )}
         </Paper>
       </Container>
     </>
   );
 };
 
-// Reusable section component
 const Section = ({ icon, title, content, externalLink, linkText }) => {
   return (
     <Box sx={{ mb: 4 }}>
@@ -234,7 +260,7 @@ const Section = ({ icon, title, content, externalLink, linkText }) => {
       </Box>
       
       <List dense>
-        {content.map((item, index) => (
+        {content?.map((item, index) => (
           <ListItem key={index} sx={{ py: 0.5 }}>
             <ListItemText primary={item} />
           </ListItem>
@@ -243,11 +269,14 @@ const Section = ({ icon, title, content, externalLink, linkText }) => {
       
       {externalLink && (
         <Button 
+          component={Link}
+          to="#"
+          onClick={(e) => {
+            e.preventDefault();
+            window.open(externalLink, '_blank', 'noopener,noreferrer');
+          }}
           variant="text" 
-          size="small" 
-          href={externalLink} 
-          target="_blank"
-          rel="noopener noreferrer"
+          size="small"
           sx={{ mt: 1 }}
         >
           {linkText}
