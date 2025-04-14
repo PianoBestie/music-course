@@ -86,7 +86,7 @@ const Signup = () => {
       setPaymentLoading(true);
       setError('');
       
-      const response = await fetch('/api/create-insta-order', {
+      const response = await fetch('https://music-course.onrender.com/api/create-insta-order', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ const Signup = () => {
       setPaymentLoading(true);
       
       // Verify payment with backend
-      const verificationResponse = await fetch('/api/verify-insta-payment', {
+      const verificationResponse = await fetch('https://music-course.onrender.com/api/verify-insta-payment', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
