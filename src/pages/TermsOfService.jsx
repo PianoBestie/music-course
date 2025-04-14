@@ -1,103 +1,258 @@
-import React, { useState } from 'react';
-import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Link, useNavigate } from 'react-router-dom';
+import { 
+  CheckCircle, 
+  Article, 
+  PrivacyTip, 
+  MonetizationOn, 
+  LocalShipping, 
+  ContactSupport 
+} from '@mui/icons-material';
+import { 
+  Button, 
+  Typography, 
+  Container, 
+  Box, 
+  Paper, 
+  Divider, 
+  List, 
+  ListItem, 
+  ListItemIcon, 
+  ListItemText,
+  CircularProgress,
+  Fade
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 const TermsOfService = () => {
-  const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const [accepted, setAccepted] = useState(false);
+  const [scrolledToBottom, setScrolledToBottom] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [policies, setPolicies] = useState(null);
+
+  // Simulate fetching policies from backend
+  useEffect(() => {
+    const fetchPolicies = async () => {
+      try {
+        // In a real app, this would be an API call to your backend
+        // which might fetch from Razorpay's API or your database
+        const mockPolicies = {
+          terms: {
+            title: "Terms of Service",
+            content: [
+              "By accessing or using Piano Bestie ('Service'), you agree to be bound by these Terms.",
+              "The Service provides piano learning resources and requires account creation for full access.",
+              "You must be at least 13 years old to use this Service or have parental consent.",
+              "We reserve the right to modify these terms at any time with notice."
+            ],
+            razorpayLink: "https://razorpay.com/terms"
+          },
+          privacy: {
+            title: "Privacy Policy",
+            content: [
+              "We collect personal data for account management and service improvement.",
+              "Payment data is processed securely through Razorpay and not stored on our servers.",
+              "We use cookies for essential functionality and analytics.",
+              "You may request data deletion by contacting our support team."
+            ],
+            razorpayLink: "https://razorpay.com/privacy"
+          },
+          refund: {
+            title: "Refund Policy",
+            content: [
+              "All subscriptions are non-refundable except where required by law.",
+              "Refund requests must be made within 14 days of payment.",
+              "Digital content purchases are final once accessed.",
+              "Chargebacks will result in immediate account termination."
+            ],
+            razorpayLink: "https://razorpay.com/refund-policy"
+          },
+          contact: {
+            title: "Contact Information",
+            content: [
+              "For technical support: support@pianobestie.com",
+              "For billing inquiries: billing@pianobestie.com",
+              "For copyright claims: legal@pianobestie.com",
+              "Mailing address: Piano Bestie Inc, 123 Music Lane, San Francisco, CA"
+            ]
+          }
+        };
+        
+        setPolicies(mockPolicies);
+      } catch (error) {
+        console.error("Failed to load policies:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPolicies();
+  }, []);
 
   const handleScroll = (e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target;
-    const isBottom = scrollHeight - scrollTop === clientHeight;
-    setIsScrolledToBottom(isBottom);
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const bottomThreshold = 50; // pixels from bottom
+    const isBottom = scrollHeight - (scrollTop + clientHeight) < bottomThreshold;
+    setScrolledToBottom(isBottom);
   };
 
+  const handleAccept = () => {
+    setAccepted(true);
+    // In a real app, you might store this acceptance in your database
+    setTimeout(() => navigate('/signup'), 500);
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <>
       <Helmet>
-        <title>Terms of Service | Piano Tutorial App</title>
-        <meta name="description" content="Read our Terms of Service for the Piano Tutorial App" />
+        <title>Terms of Service | Piano Bestie</title>
+        <meta name="description" content="Complete terms of service and policies for Piano Bestie" />
       </Helmet>
 
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Terms of Service</h1>
-            <span className="text-sm text-gray-500">Last Updated: {new Date().toLocaleDateString()}</span>
-          </div>
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, borderRadius: 2 }}>
+          <Box textAlign="center" mb={4}>
+            <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
+              Terms & Policies
+            </Typography>
+            <Typography variant="subtitle1" color="text.secondary">
+              Last Updated: {new Date().toLocaleDateString()}
+            </Typography>
+          </Box>
 
-          <div className="border-t border-gray-200 pt-6">
-            <div 
-              className="prose prose-indigo max-h-[60vh] overflow-y-auto mb-6"
-              onScroll={handleScroll}
-            >
-              <h2 className="text-xl font-semibold text-gray-800 mt-6">1. Acceptance of Terms</h2>
-              <p className="text-gray-600">
-                By accessing or using our piano tutorial service ("Service"), you agree to be bound by these Terms of Service. If you do not agree, please do not use our Service.
-              </p>
+          <Divider sx={{ my: 2 }} />
 
-              <h2 className="text-xl font-semibold text-gray-800 mt-6">2. Subscription Requirements</h2>
-              <p className="text-gray-600">
-                Access to premium features requires payment. All payments are final and non-refundable, except where required by law. Subscriptions automatically renew unless canceled.
-              </p>
+          <Box 
+            sx={{ 
+              maxHeight: '60vh', 
+              overflowY: 'auto',
+              pr: 2,
+              mb: 4,
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 1,
+              p: 2
+            }}
+            onScroll={handleScroll}
+          >
+            <Section 
+              icon={<Article color="primary" />}
+              title="1. Terms of Service"
+              content={policies.terms.content}
+              externalLink={policies.terms.razorpayLink}
+              linkText="View Razorpay's Terms"
+            />
 
-              <h2 className="text-xl font-semibold text-gray-800 mt-6">3. User Responsibilities</h2>
-              <p className="text-gray-600">
-                You agree to:
-              </p>
-              <ul className="list-disc pl-5 text-gray-600">
-                <li>Maintain account security</li>
-                <li>Use content for personal, non-commercial purposes only</li>
-                <li>Not share, resell, or redistribute our materials</li>
-              </ul>
+            <Section 
+              icon={<PrivacyTip color="primary" />}
+              title="2. Privacy Policy"
+              content={policies.privacy.content}
+              externalLink={policies.privacy.razorpayLink}
+              linkText="View Razorpay's Privacy Policy"
+            />
 
-              <h2 className="text-xl font-semibold text-gray-800 mt-6">4. Prohibited Conduct</h2>
-              <p className="text-gray-600">
-                You may not:
-              </p>
-              <ul className="list-disc pl-5 text-gray-600">
-                <li>Reverse engineer or hack our systems</li>
-                <li>Use automated tools to access content</li>
-                <li>Violate copyright laws</li>
-              </ul>
+            <Section 
+              icon={<MonetizationOn color="primary" />}
+              title="3. Payment & Refunds"
+              content={policies.refund.content}
+              externalLink={policies.refund.razorpayLink}
+              linkText="View Razorpay's Refund Policy"
+            />
 
-              <h2 className="text-xl font-semibold text-gray-800 mt-6">5. Intellectual Property</h2>
-              <p className="text-gray-600">
-                All tutorial content, including videos and sheet music, is protected by copyright and owned by our company.
-              </p>
+            <Section 
+              icon={<ContactSupport color="primary" />}
+              title="4. Contact Information"
+              content={policies.contact.content}
+            />
 
-              <h2 className="text-xl font-semibold text-gray-800 mt-6">6. Termination</h2>
-              <p className="text-gray-600">
-                We may terminate accounts for violations of these Terms without notice.
-              </p>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 4, fontStyle: 'italic' }}>
+              By continuing, you acknowledge that you have read and understood all terms and policies above.
+            </Typography>
+          </Box>
 
-              <h2 className="text-xl font-semibold text-gray-800 mt-6">7. Limitation of Liability</h2>
-              <p className="text-gray-600">
-                We are not liable for any indirect damages resulting from Service use.
-              </p>
+          <Fade in={scrolledToBottom}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              p: 2,
+              bgcolor: accepted ? 'success.light' : 'primary.light',
+              borderRadius: 1,
+              transition: 'all 0.3s ease'
+            }}>
+              <Box display="flex" alignItems="center">
+                <CheckCircle sx={{ mr: 1, color: accepted ? 'success.main' : 'primary.main' }} />
+                <Typography>
+                  {accepted ? 'Terms Accepted!' : 'Please read all terms before continuing'}
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                size="large"
+                disabled={!scrolledToBottom || accepted}
+                onClick={handleAccept}
+                sx={{ minWidth: 120 }}
+              >
+                {accepted ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  'I Accept'
+                )}
+              </Button>
+            </Box>
+          </Fade>
+        </Paper>
+      </Container>
+    </>
+  );
+};
 
-              <h2 className="text-xl font-semibold text-gray-800 mt-6">8. Governing Law</h2>
-              <p className="text-gray-600">
-                These Terms are governed by the laws.
-              </p>
-            </div>
-
-            <div className={`transition-opacity duration-300 ${isScrolledToBottom ? 'opacity-100' : 'opacity-0'}`}>
-          
-              <div className="mt-4 flex justify-end">
-               <Link to='/signup'> <button
-                  type="button"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                  disabled={!isScrolledToBottom}
-                >
-                  Continue
-                </button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+// Reusable section component
+const Section = ({ icon, title, content, externalLink, linkText }) => {
+  return (
+    <Box sx={{ mb: 4 }}>
+      <Box display="flex" alignItems="center" mb={2}>
+        <ListItemIcon sx={{ minWidth: 'auto', mr: 1 }}>
+          {icon}
+        </ListItemIcon>
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+          {title}
+        </Typography>
+      </Box>
+      
+      <List dense>
+        {content.map((item, index) => (
+          <ListItem key={index} sx={{ py: 0.5 }}>
+            <ListItemText primary={item} />
+          </ListItem>
+        ))}
+      </List>
+      
+      {externalLink && (
+        <Button 
+          variant="text" 
+          size="small" 
+          href={externalLink} 
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{ mt: 1 }}
+        >
+          {linkText}
+        </Button>
+      )}
+      
+      <Divider sx={{ mt: 2 }} />
+    </Box>
   );
 };
 

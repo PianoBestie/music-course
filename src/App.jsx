@@ -27,6 +27,7 @@ import PaymentRequired from "./pages/PaymentRequired";
 import { useDispatch } from 'react-redux';
 import { initAuthListener } from './components/authSlice';
 import AdminPanel from "./components/AdminPanel";
+import TermsOfService from "./pages/TermsOfService";
 
 const PortraitWarning = () => (
   <div className="portrait-warning">
@@ -128,6 +129,7 @@ function App() {
               <Route path="/durations" element={<Durations />} />
               <Route path="/piano-hand-position" element={<PianoHandPosition />} />
               <Route path="/exercise-piano" element={<ExercisePiano />} />
+              <Route path="/terms" element={<TermsOfService />} />
               
               {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
