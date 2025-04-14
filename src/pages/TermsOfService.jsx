@@ -180,37 +180,40 @@ const TermsOfService = () => {
             </Typography>
           </Box>
 
-          <Fade in={scrolledToBottom}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              p: 2,
-              bgcolor: accepted ? 'success.light' : 'primary.light',
-              borderRadius: 1,
-              transition: 'all 0.3s ease'
-            }}>
-              <Box display="flex" alignItems="center">
-                <CheckCircle sx={{ mr: 1, color: accepted ? 'success.main' : 'primary.main' }} />
-                <Typography>
-                  {accepted ? 'Terms Accepted!' : 'Please read all terms before continuing'}
-                </Typography>
-              </Box>
-              <Button
-                variant="contained"
-                size="large"
-                disabled={!scrolledToBottom || accepted}
-                onClick={handleAccept}
-                sx={{ minWidth: 120 }}
-              >
-                {accepted ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  'I Accept'
-                )}
-              </Button>
-            </Box>
-          </Fade>
+          {policies && (
+  <Fade in={scrolledToBottom}>
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'space-between', 
+      alignItems: 'center',
+      p: 2,
+      bgcolor: accepted ? 'success.light' : 'primary.light',
+      borderRadius: 1,
+      transition: 'all 0.3s ease'
+    }}>
+      <Box display="flex" alignItems="center">
+        <CheckCircle sx={{ mr: 1, color: accepted ? 'success.main' : 'primary.main' }} />
+        <Typography>
+          {accepted ? 'Terms Accepted!' : 'Please read all terms before continuing'}
+        </Typography>
+      </Box>
+      <Button
+        variant="contained"
+        size="large"
+        disabled={!scrolledToBottom || accepted}
+        onClick={handleAccept}
+        sx={{ minWidth: 120 }}
+      >
+        {accepted ? (
+          <CircularProgress size={24} color="inherit" />
+        ) : (
+          'I Accept'
+        )}
+      </Button>
+    </Box>
+  </Fade>
+)}
+
         </Paper>
       </Container>
     </>
