@@ -81,7 +81,7 @@ const apiLimiter = rateLimit({
 // API Routes
 // ===========================================
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -92,7 +92,7 @@ app.get('/health', (req, res) => {
 });
 
 // Payment routes
-app.use('/create-razorpay-order', apiLimiter, (req, res) => {
+app.use('/api/create-razorpay-order', apiLimiter, (req, res) => {
   try {
     // Your Razorpay order creation logic here
     res.json({ success: true, order: {} });
@@ -102,7 +102,7 @@ app.use('/create-razorpay-order', apiLimiter, (req, res) => {
   }
 });
 
-app.use('/verify-payment', apiLimiter, (req, res) => {
+app.use('/api/verify-payment', apiLimiter, (req, res) => {
   try {
     // Your payment verification logic here
     res.json({ success: true });
