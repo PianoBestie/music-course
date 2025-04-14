@@ -1,7 +1,7 @@
 import Instamojo from 'instamojo-nodejs';
 import dotenv from 'dotenv';
 import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig.js';
+import { db } from './firebaseConfig.js';
 
 dotenv.config();
 
