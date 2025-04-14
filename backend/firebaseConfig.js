@@ -46,15 +46,7 @@ const configureFirebase = async () => {
       // Use session persistence for development
       await setPersistence(auth, browserSessionPersistence);
       
-      // Emulator connection
-      if (window.location.hostname === 'localhost') {
-        const { connectFirestoreEmulator } = await import('firebase/firestore');
-        const { connectAuthEmulator } = await import('firebase/auth');
-        
-        connectFirestoreEmulator(db, 'localhost', 8080);
-        connectAuthEmulator(auth, "http://localhost:9099");
-        console.log('Connected to Firebase emulators');
-      }
+  
     }
   } catch (error) {
     console.error('Firebase configuration error:', error);
