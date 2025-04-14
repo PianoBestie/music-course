@@ -321,7 +321,7 @@ const Signup = () => {
                 
                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                   <p className="text-sm text-blue-700">
-                    <span className="font-semibold">Note:</span> A nominal ₹1 payment is required to verify your account and complete registration.
+                    <span className="font-semibold">Note:</span> A nominal ₹599 payment is required to complete registration.
                   </p>
                 </div>
                 
@@ -353,7 +353,7 @@ const Signup = () => {
                       Processing Payment...
                     </>
                   ) : (
-                    'Pay ₹1 & Complete Registration'
+                    'Pay ₹599 & Complete Registration'
                   )}
                 </button>
               </div>
