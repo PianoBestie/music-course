@@ -81,41 +81,12 @@ const Signup = () => {
     }
   };
 
-  const handlePayment = async () => {
-    try {
-      setPaymentLoading(true);
-      setError('');
-      
-      const response = await fetch('https://music-course.onrender.com/api/create-insta-order', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
-        },
-        body: JSON.stringify({
-          amount: 599,
-          purpose: 'Piano Course Access',
-          userId: userData.uid,
-          email: userData.email,
-          name: userData.displayName
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create payment order');
-      }
-
-      const data = await response.json();
-      window.location.href = data.payment_url;
-
-    } catch (error) {
-      console.error('Payment processing error:', error);
-      setError(error.message || 'Payment processing failed');
-      setPaymentLoading(false);
-    }
-  };
-
+// React Signup Component - Simplified Payment Handling
+const handlePayment = () => {
+  setPaymentLoading(true);
+  // Redirect directly to Instamojo payment link
+  window.location.href = "https://imjo.in/MCEE3S"; // Your generated link
+};
   const verifyAndCompleteRegistration = async (paymentRequestId, paymentId) => {
     try {
       setPaymentLoading(true);
@@ -151,11 +122,16 @@ const Signup = () => {
 
   const completeRegistration = async (paymentRequestId, paymentId) => {
     try {
+      // Quick validation (recommended minimum)
+      if (!userData?.uid || !paymentRequestId || !paymentId) {
+        throw new Error('Missing required user or payment data');
+      }
+  
       const userDataToSave = {
-        name: userData.displayName,
+        name: userData.displayName || '', // Fallback for empty name
         uid: userData.uid,
-        email: userData.email,
-        photoURL: userData.photoURL,
+        email: userData.email || '',
+        photoURL: userData.photoURL || '',
         createdAt: new Date(),
         lastLogin: new Date(),
         emailVerified: true,
@@ -172,16 +148,19 @@ const Signup = () => {
           currency: 'INR'
         }
       };
-
+  
       await setDoc(doc(db, 'users', userData.uid), userDataToSave);
       setSuccess('Registration and payment successful!');
-
+  
     } catch (err) {
-      console.error('Firestore write error:', err);
-      throw err;
+      console.error('Firestore write error:', {
+        error: err.message,
+        userId: userData?.uid,
+        paymentIds: { paymentRequestId, paymentId }
+      });
+      throw err; // Re-throw for calling function to handle
     }
   };
-
   const getFirebaseErrorMessage = (code) => {
     switch (code) {
       case 'auth/popup-closed-by-user':
