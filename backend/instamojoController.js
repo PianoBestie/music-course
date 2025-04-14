@@ -5,7 +5,7 @@ import { db } from '../firebaseConfig.js';
 
 dotenv.config();
 
-Instamojo.setup(process.env.INSTAMOJO_CLIENT_ID, process.env.INSTAMOJO_CLIENT_SECRET);
+Instamojo.setup(process.env.INSTAMOJO_API_KEY, process.env.INSTAMOJO_AUTH_TOKEN);
 Instamojo.isSandboxMode(true); // Set to false in production
 
 export const createPaymentOrder = async (req, res) => {
