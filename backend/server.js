@@ -8,7 +8,7 @@ import https from 'https';
 import dns from 'dns';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig.js';
-import admin from 'firebase-admin';
+import admin from 'firebase-admin.js';
 
 // Initialize Firebase Admin
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
