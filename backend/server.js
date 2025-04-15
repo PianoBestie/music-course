@@ -89,7 +89,8 @@ app.post('/api/create-payment-order', apiLimiter, async (req, res) => {
   } catch (error) {
     console.error('Payment creation failed:', {
       error: error.message,
-      response: error.response?.data
+      response: error.response?.data,
+      stack: error.stack
     });
     res.status(500).json({ 
       success: false, 
