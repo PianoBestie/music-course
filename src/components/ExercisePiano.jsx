@@ -1256,8 +1256,8 @@ setIsPlay(true)
                 } ${
                   !isPlaying && isInScale && !isYourTurn ?  "activeorange" : ""
                 }`}
-                onMouseDown={() => handlePianoKeyMouseDown(note)}
-                onMouseUp={() => handlePianoKeyMouseUp(note)}
+                onTouchStart={() => handlePianoKeyMouseDown(key + octave)}
+                onTouchEnd={() => handlePianoKeyMouseUp(key + octave)}
                 data-note={note}
                 style={{ left: `${i * 50}px` }}
               >
@@ -1279,8 +1279,8 @@ setIsPlay(true)
                 } ${
                   !isPlaying && isInScale && !isYourTurn ? "activeorange" : ""
                 }`}
-                onMouseDown={() => handlePianoKeyMouseDown(note)}
-                onMouseUp={() => handlePianoKeyMouseUp(note)}
+                onTouchStart={() => handlePianoKeyMouseDown(key + octave)}
+                onTouchEnd={() => handlePianoKeyMouseUp(key + octave)}
                 data-note={note}
                 style={{ left: `${(pos + (octave === "5" ? 7 : 0)) * (100 / 14) + 4}%` }}
               >
