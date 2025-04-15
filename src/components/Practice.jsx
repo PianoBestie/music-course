@@ -1441,8 +1441,8 @@ const clearAllKeyHighlights = () => {
               className={`black-key8 key8 ${
                 activeKeys.includes(key + octave) ? "active" : ""
               }`}
-              onMouseDown={() => handlePianoKeyMouseDown(key + octave)}
-              onMouseUp={() => handlePianoKeyMouseUp(key + octave)}
+              onTouchStart={() => handlePianoKeyMouseDown(key + octave)}
+              onTouchEnd={() => handlePianoKeyMouseUp(key + octave)}
               data-note={key + octave}
               style={{
                 left: `${(pos + octaveIndex * 7) * (100 / 21) + 3}%`,
