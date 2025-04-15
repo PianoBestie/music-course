@@ -1109,13 +1109,13 @@ setIsPlay(true)
       <div className="flex items-center justify-center w-full space-x-4 my-2">
         {/* Exercise Dropdown */}
         <div className="exercise-selector flex items-center space-x-4">
-          <label className="text-lg font-semibold">Exercise:</label>
+          <label className="text-xs lg:text-lg  font-semibold">Exercise:</label>
           <select
             value={selectedExercise}
             onChange={(e) => setSelectedExercise(e.target.value)}
-            className="border-2 border-black p-2 rounded-md font-montserrat"
+            className="border-2 border-black p-2 rounded-md font-montserrat text-xs lg:text-lg "
           >
-      <optgroup label="Sarali Varisai">
+      <optgroup label="Sarali Varisai  ">
     <option value="ex1">Exercise 1</option>
     <option value="ex2">Exercise 2</option>
     <option value="ex3">Exercise 3</option>
@@ -1152,11 +1152,11 @@ setIsPlay(true)
 
         {/* Scale Type Dropdown */}
         <div className="scale-type-selector flex items-center space-x-4">
-          <label className="text-lg font-semibold">Scale Type:</label>
+          <label className="text-xs lg:text-lg  font-semibold">Scale Type:</label>
           <select
             value={selectedScaleType}
             onChange={(e) => setSelectedScaleType(e.target.value)}
-            className="border-2 border-black p-2 rounded-md font-montserrat"
+            className="border-2 border-black p-2 rounded-md font-montserrat text-xs lg:text-lg"
           >
             <option value="major">Major</option>
             <option value="minor">Minor</option>
@@ -1167,11 +1167,11 @@ setIsPlay(true)
 
         {/* Scale Dropdown */}
         <div className="scale-selector flex items-center space-x-4">
-          <label className="text-lg font-semibold">Select Scale:</label>
+          <label className="text-xs lg:text-lg font-semibold">Select Scale:</label>
           <select
             value={selectedScale}
             onChange={(e) => setSelectedScale(e.target.value)}
-            className="border-2 border-black p-2 rounded-md font-montserrat"
+            className="border-2 border-black p-2 rounded-md font-montserrat text-xs lg:text-lg"
           >
             {scales[selectedScaleType] && Object.keys(scales[selectedScaleType]).map((scale) => (
               <option key={scale} value={scale}>
@@ -1183,8 +1183,8 @@ setIsPlay(true)
 
         {/* Next Expected Note Toggle */}
         <div className="toggle-next-expected flex items-center space-x-4">
-          <label className="text-sm font-semibold font-mali">
-            Guide me <span className="font-thin text-xs">(Show Next Note):</span>
+          <label className="text-xs font-semibold font-mali">
+            Guide me
           </label>
           <label className="switch">
             <input
@@ -1294,7 +1294,7 @@ setIsPlay(true)
       {/* Action Buttons */}
       <div className="flex mt-2 gap-5 justify-center">
         <button
-          className="bg-[#110016] text-white py-2 px-6 rounded-lg hover:bg-gradient-to-tr hover:from-[#110016] hover:to-[#450159] transition duration-300 font-merriweather"
+          className="bg-[#110016] text-white py-2 px-4 rounded-lg hover:bg-gradient-to-tr hover:from-[#110016] hover:to-[#450159] transition duration-300 font-merriweather"
           onClick={playScale}
           disabled={isPlaying}
         >
@@ -1305,7 +1305,7 @@ setIsPlay(true)
 
         <button
           onClick={startYourTurn}
-          className={`bg-[#008c7a] text-white py-2 px-6 rounded-lg hover:bg-gradient-to-tr hover:from-[#00d2b4] hover:to-[#008c7a] transition duration-300 font-mali ${
+          className={` text-xs lg:text-lg bg-[#008c7a] text-white py-2 px-6 rounded-lg hover:bg-gradient-to-tr hover:from-[#00d2b4] hover:to-[#008c7a] transition duration-300 font-mali ${
             !isPlay? "opacity-50 cursor-not-allowed" : ""
           }`}
           disabled={!isPlay} 

@@ -135,7 +135,7 @@ const RootChords = () => {
           {firstSixChords.map((chord, index) => (
             <div key={index} className="relative group">
               <button
-                className="bg-[#110016] text-white py-2 px-6 rounded-lg hover:bg-gradient-to-tr hover:from-[#110016] hover:to-[#450159] transition duration-300 mt-2 font-merriweather"
+                className="text-[0.8em] lg:text-lg bg-[#110016] text-white py-2 px-4 rounded-lg hover:bg-gradient-to-tr hover:from-[#110016] hover:to-[#450159] transition duration-300 mt-2 font-merriweather"
                 onClick={() => playChord(chord.notes)}
                 disabled={isPlaying}
               >
@@ -206,7 +206,7 @@ const RootChords = () => {
           {nextSixChords.map((chord, index) => (
             <div key={index} className="relative group">
               <button
-                className="bg-[#110016] text-white py-2 px-6 rounded-lg hover:bg-gradient-to-tr hover:from-[#110016] hover:to-[#450159] transition duration-300 mt-2 font-merriweather"
+                className="text-[0.8em] lg:text-lg bg-[#110016] text-white py-2 px-4 rounded-lg hover:bg-gradient-to-tr hover:from-[#110016] hover:to-[#450159] transition duration-300 mt-2 font-merriweather"
                 onClick={() => playChord(chord.notes)}
                 disabled={isPlaying}
               >

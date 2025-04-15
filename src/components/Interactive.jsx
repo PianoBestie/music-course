@@ -288,14 +288,14 @@ const Piano = () => {
       <div className="flex items-center justify-center w-full gap-5 my-2">
         {/* Scale Type Dropdown */}
         <div className="scale-type-selector flex items-center space-x-4 my-4">
-          <label className="text-lg font-semibold">Scale Type:</label>
+          <label className="text-xs lg:text-lgfont-semibold">Scale Type:</label>
           <select
             value={scaleType}
             onChange={(e) => {
               setScaleType(e.target.value);
               setSelectedScale("C");
             }}
-            className="border-2 border-black p-2 rounded-md font-montserrat"
+            className="border-2 border-black p-2 rounded-md font-montserrat text-xs lg:text-lg"
           >
             <option value="major">Major</option>
             <option value="minor">Minor</option>
@@ -309,11 +309,11 @@ const Piano = () => {
 
         {/* Scale Dropdown */}
         <div className="scale-selector flex items-center space-x-4">
-          <label className="text-lg font-semibold">Select Scale:</label>
+          <label className="text-xs lg:text-lgfont-semibold">Select Scale:</label>
           <select
             value={selectedScale}
             onChange={(e) => setSelectedScale(e.target.value)}
-            className="border-2 border-black p-2 rounded-md font-montserrat"
+            className="border-2 border-black p-2 rounded-md font-montserrat text-xs lg:text-lg"
           >
             {Object.keys(scales[scaleType]).map((scale) => (
               <option key={scale} value={scale}>
@@ -325,11 +325,11 @@ const Piano = () => {
 
         {/* Scale Direction Dropdown */}
         <div className="scale-direction-selector flex items-center space-x-4">
-          <label className="text-lg font-semibold">Direction:</label>
+          <label className="text-xs lg:text-lg font-semibold">Direction:</label>
           <select
             value={scaleDirection}
             onChange={(e) => setScaleDirection(e.target.value)}
-            className="border-2 border-black p-2 rounded-md font-montserrat"
+            className="border-2 border-black p-2 rounded-md font-montserrat text-xs lg:text-lg"
           >
             <option value="ascending">Ascending</option>
             <option value="descending">Descending</option>
@@ -338,7 +338,7 @@ const Piano = () => {
 
         {/* Modern Toggle Switch for Next Expected Note */}
         <div className="toggle-next-expected flex items-center space-x-4">
-          <label className="text-sm font-semibold font-mali">Guide me <span className="font-thin text-xs">(Show Next Note):</span></label>
+          <label className="text-xs lg:text-lg font-semibold font-mali">Guide me</label>
           <label className="switch">
             <input
               type="checkbox"
@@ -403,7 +403,7 @@ const Piano = () => {
       {/* Play and Other Buttons */}
       <div className="flex mt-2 gap-5">
         <button
-          className="bg-[#110016] text-white py-2 px-6 rounded-lg hover:bg-gradient-to-tr hover:from-[#110016] hover:to-[#450159] transition duration-300 font-merriweather"
+          className="text-xs lg:text-lg bg-[#110016] text-white py-2 px-4 rounded-lg hover:bg-gradient-to-tr hover:from-[#110016] hover:to-[#450159] transition duration-300 font-merriweather"
           onClick={playScale}
         >
           ▶ Play {selectedScale} {scaleType} Scale ({scaleDirection})
