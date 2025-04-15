@@ -95,9 +95,7 @@ const Signup = () => {
           photoURL: result.user.photoURL
         });
         setSuccess("Google auth successful! Complete payment.");
-      } else {
-        navigate("/dashboard");
-      }
+      } 
     } catch (error) {
       setError(getFirebaseErrorMessage(error.code));
       console.error("Google sign-in error:", error);
