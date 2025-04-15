@@ -12,7 +12,7 @@ export default function PaymentSuccess() {
       const paymentRequestId = urlParams.get('payment_request_id');
       
       // Verify payment (you can also rely on webhook)
-      const response = await fetch(`/api/verify-payment?payment_request_id=${paymentRequestId}`);
+      const response = await fetch(`https://music-course.onrender.com/api/verify-payment?payment_request_id=${paymentRequestId}`);
       
       if (response.ok) {
         navigate('/dashboard'); // Redirect to app
