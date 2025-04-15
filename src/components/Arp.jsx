@@ -792,8 +792,7 @@ const Arp = () => {
     return noteIndex + (octave + 1) * 12;
   };
 
-  // Play a note using Web Audio API
- const playNote = useCallback((noteInput, duration = null, velocity = 127) => {
+  const playNote = useCallback((noteInput, duration = null, velocity = 127) => {
     initAudioContext();
     const audioContext = audioContextRef.current;
     
@@ -810,7 +809,14 @@ const Arp = () => {
       midiNumber = noteToMidiNumber(note, octave);
       noteName = noteInput;
     }
-
+  
+    // First stop any existing note with the same MIDI number
+    if (oscillatorsRef.current[midiNumber]) {
+      oscillatorsRef.current[midiNumber].oscillator.stop();
+      oscillatorsRef.current[midiNumber].gain.disconnect();
+      delete oscillatorsRef.current[midiNumber];
+    }
+  
     // Create audio nodes with envelope
     const now = audioContext.currentTime;
     const oscillator = audioContext.createOscillator();
@@ -846,35 +852,77 @@ const Arp = () => {
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
       }
       oscillator.stop(now + duration);
+      
+      // Clean up after note ends
+      oscillator.onended = () => {
+        if (oscillatorsRef.current[midiNumber] && 
+            oscillatorsRef.current[midiNumber].oscillator === oscillator) {
+          gain.disconnect();
+          delete oscillatorsRef.current[midiNumber];
+        }
+      };
     }
-
+  
     return { midiNumber, noteName };
   }, [initAudioContext]);
-
+  
   // Stop a specific note
   const stopNote = useCallback((noteInput) => {
-    let noteName;
+    let midiNumber;
     
     if (typeof noteInput === 'number') {
-      noteName = midiToNoteName(noteInput);
+      midiNumber = noteInput;
     } else {
-      noteName = noteInput;
+      const note = noteInput.slice(0, -1);
+      const octave = parseInt(noteInput.slice(-1));
+      midiNumber = noteToMidiNumber(note, octave);
     }
-
-    if (oscillatorsRef.current[noteName]) {
-      oscillatorsRef.current[noteName].stop();
-      delete oscillatorsRef.current[noteName];
+  
+    if (oscillatorsRef.current[midiNumber]) {
+      const { oscillator, gain } = oscillatorsRef.current[midiNumber];
+      
+      // Schedule a quick release
+      const now = audioContextRef.current.currentTime;
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      
+      oscillator.stop(now + 0.05);
+      
+      // Clean up after release
+      oscillator.onended = () => {
+        gain.disconnect();
+        if (oscillatorsRef.current[midiNumber] && 
+            oscillatorsRef.current[midiNumber].oscillator === oscillator) {
+          delete oscillatorsRef.current[midiNumber];
+        }
+      };
     }
   }, []);
-
+  
   // Stop all playing notes
   const stopAllNotes = useCallback(() => {
-    Object.entries(oscillatorsRef.current).forEach(([noteName, oscillator]) => {
-      oscillator.stop();
-      delete oscillatorsRef.current[noteName];
+    const now = audioContextRef.current?.currentTime;
+    if (!now) return;
+  
+    Object.values(oscillatorsRef.current).forEach(({ oscillator, gain }) => {
+      // Schedule a quick release for all notes
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      
+      oscillator.stop(now + 0.05);
+      
+      // Clean up after release
+      oscillator.onended = () => {
+        gain.disconnect();
+      };
     });
+    
+    oscillatorsRef.current = {};
   }, []);
 
+ 
   const highlightKey = useCallback((noteName, highlightType) => {
     const key = document.querySelector(`.key9[data-note="${noteName}"]`);
     if (!key) return;

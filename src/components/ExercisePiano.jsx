@@ -1294,7 +1294,7 @@ setIsPlay(true)
       {/* Action Buttons */}
       <div className="flex mt-2 gap-5 justify-center">
         <button
-          className="bg-[#110016] text-white py-2 px-4 rounded-lg hover:bg-gradient-to-tr hover:from-[#110016] hover:to-[#450159] transition duration-300 font-merriweather"
+          className=" text-xs lg:text-lg bg-[#110016] text-white py-2 px-4 rounded-lg hover:bg-gradient-to-tr hover:from-[#110016] hover:to-[#450159] transition duration-300 font-merriweather"
           onClick={playScale}
           disabled={isPlaying}
         >
@@ -1305,7 +1305,7 @@ setIsPlay(true)
 
         <button
           onClick={startYourTurn}
-          className={` text-xs lg:text-lg bg-[#008c7a] text-white py-2 px-6 rounded-lg hover:bg-gradient-to-tr hover:from-[#00d2b4] hover:to-[#008c7a] transition duration-300 font-mali ${
+          className={` bg-[#008c7a] text-white py-2 px-6 rounded-lg hover:bg-gradient-to-tr hover:from-[#00d2b4] hover:to-[#008c7a] transition duration-300 font-mali ${
             !isPlay? "opacity-50 cursor-not-allowed" : ""
           }`}
           disabled={!isPlay} 
