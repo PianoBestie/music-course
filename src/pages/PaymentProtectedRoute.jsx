@@ -1,101 +1,51 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, useLocation } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-
-const usePaymentStatusCache = () => {
-  const getCachedPaymentStatus = (userId) => {
-    try {
-      const cachedData = localStorage.getItem(`paymentStatus_${userId}`);
-      if (!cachedData) return null;
-      
-      const { status, timestamp } = JSON.parse(cachedData);
-      // Cache valid for 1 hour
-      if (Date.now() - timestamp > 3600000) {
-        localStorage.removeItem(`paymentStatus_${userId}`);
-        return null;
-      }
-      return status;
-    } catch (error) {
-      console.error('Error reading payment cache:', error);
-      return null;
-    }
-  };
-
-  const setCachedPaymentStatus = (userId, status) => {
-    try {
-      localStorage.setItem(
-        `paymentStatus_${userId}`,
-        JSON.stringify({ status, timestamp: Date.now() })
-      );
-    } catch (error) {
-      console.error('Error caching payment status:', error);
-    }
-  };
-
-  return { getCachedPaymentStatus, setCachedPaymentStatus };
-};
+import { auth } from '../firebaseConfig';
+import { CircularProgress } from '@mui/material';
 
 const PaymentProtectedRoute = ({ children }) => {
   const currentUser = useSelector((state) => state.auth.currentUser);
-  const authLoading = useSelector((state) => state.auth.loading);
   const [paymentStatus, setPaymentStatus] = useState(null);
-  const [firestoreLoading, setFirestoreLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
-  const { getCachedPaymentStatus, setCachedPaymentStatus } = usePaymentStatusCache();
-
-  const LoadingFallback = useMemo(() => (
-    <div className="flex justify-center items-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-    </div>
-  ), []);
 
   useEffect(() => {
-    if (authLoading) return;
-
     if (!currentUser) {
-      setFirestoreLoading(false);
+      setLoading(false);
       return;
     }
 
-    // Check cache first
-    const cachedStatus = getCachedPaymentStatus(currentUser.uid);
-    if (cachedStatus) {
-      setPaymentStatus(cachedStatus);
-      setFirestoreLoading(false);
-      return;
-    }
+    const userRef = doc(db, 'users', currentUser.uid);
+    const unsubscribe = onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        console.log("Firestore Payment Data:", data); // Debug log
+        
+        // Ensure we're checking the exact field name
+        const status = data.paymentStatus;
+        setPaymentStatus(status);
 
-    let unsubscribe;
-
-    const fetchPaymentStatus = async () => {
-      try {
-        const userRef = doc(db, 'users', currentUser.uid);
-        unsubscribe = onSnapshot(userRef, (doc) => {
-          if (doc.exists()) {
-            const newStatus = doc.data().paymentStatus || 'pending';
-            setPaymentStatus(newStatus);
-            setCachedPaymentStatus(currentUser.uid, newStatus);
-          } else {
-            setPaymentStatus('pending');
-          }
-          setFirestoreLoading(false);
-        });
-      } catch (error) {
-        console.error('Payment check error:', error);
-        setPaymentStatus('pending');
-        setFirestoreLoading(false);
+        // If verified and on payment-required, redirect to intended path
+        if (status === 'verified' && location.pathname === '/payment-required') {
+          const redirectTo = new URLSearchParams(location.search).get('redirect') || '/dashboard';
+          navigate(redirectTo, { replace: true });
+        }
       }
-    };
+      setLoading(false);
+    });
 
-    fetchPaymentStatus();
+    return () => unsubscribe();
+  }, [currentUser, location]);
 
-    return () => unsubscribe && unsubscribe();
-  }, [currentUser, authLoading, getCachedPaymentStatus, setCachedPaymentStatus]);
-
-  if (authLoading || (!paymentStatus && firestoreLoading)) {
-    return LoadingFallback;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <CircularProgress />
+      </div>
+    );
   }
 
   if (!currentUser) {
