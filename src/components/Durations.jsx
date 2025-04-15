@@ -37,24 +37,24 @@ const MSheet = () => {
   const noteKnowledgeFiles = {
 
     "2/4": {
-      xml: "public/24.xml",
-      midi: "public/24.mid",
+      xml: "./24.xml",
+      midi: "/24.mid",
     },
     "3/4": {
-      xml: "./public/34.xml",
-      midi: "/public/34.mid",
+      xml: "./34.xml",
+      midi: "/34.mid",
     },
     "6/8": {
-      xml: "./public/68.xml",
-      midi: "/public/68.mid",
+      xml: "./68.xml",
+      midi: "/68.mid",
     },
     "5/8": {
-      xml: "./public/58.xml",
-      midi: "/public/58.mid",
+      xml: "./58.xml",
+      midi: "/58.mid",
     },
     "7/8": {
-      xml: "./public/78.xml",
-      midi: "/public/78.mid",
+      xml: "./78.xml",
+      midi: "/78.mid",
     },
   };
 
