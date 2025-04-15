@@ -26,7 +26,7 @@ export const instamojoWebhook = async (req, res) => {
       // 3. Verify webhook signature (critical security step)
       const providedSignature = req.headers['x-instamojo-signature'];
       const generatedSignature = crypto
-          .createHmac('sha256', process.env.INSTAMOJO_PRIVATE_SALT)
+          .createHmac('sha256', process.env.INSTAMOJO_SALT)
           .update(JSON.stringify(req.body))
           .digest('hex');
 
