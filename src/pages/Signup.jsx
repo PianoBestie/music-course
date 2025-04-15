@@ -50,9 +50,8 @@ const Signup = () => {
             photoURL: user.photoURL
           });
           setSuccess('Google authentication successful!');
-        } else {
-          navigate('/dashboard');
-        }
+        } 
+        
       }
     });
     return unsubscribe;
