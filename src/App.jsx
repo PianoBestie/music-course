@@ -97,7 +97,6 @@ function App() {
         <>
           <ScrollToTop />
           <Navbar />
-          <DashBoard/>
           <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
             <Routes location={location} key={location.pathname}>
               {/* Conditional route for admin */}
