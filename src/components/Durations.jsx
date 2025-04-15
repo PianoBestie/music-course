@@ -38,23 +38,23 @@ const MSheet = () => {
 
     "2/4": {
       xml: "./24.xml",
-      midi: "/24.mid",
+      midi: "./24.mid",
     },
     "3/4": {
       xml: "./34.xml",
-      midi: "/34.mid",
+      midi: "./34.mid",
     },
     "6/8": {
       xml: "./68.xml",
-      midi: "/68.mid",
+      midi: "./68.mid",
     },
     "5/8": {
       xml: "./58.xml",
-      midi: "/58.mid",
+      midi: "./58.mid",
     },
     "7/8": {
       xml: "./78.xml",
-      midi: "/78.mid",
+      midi: "./78.mid",
     },
   };
 
