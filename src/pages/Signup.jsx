@@ -15,7 +15,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
-  const [checkingUser, setCheckingUser] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [userData, setUserData] = useState(null);
@@ -31,67 +30,28 @@ const Signup = () => {
     note: '1-year piano course access'
   };
 
-  // Check for payment success redirect
-  useEffect(() => {
-    const uid = searchParams.get('uid');
-    if (uid && auth.currentUser?.uid === uid) {
-      checkPaymentStatus();
-    }
-  }, [searchParams]);
-
-  // Auth state listener
+  // Auth state listener - focused only on auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCheckingUser(true);
       if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          
-          // Always set user data if user is logged in
-          setUserData({
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL
-          });
-          
-          if (userDoc.exists()) {
-            if (userDoc.data().paymentStatus === 'verified') {
-              navigate('/dashboard');
-            } else {
-              setSuccess('Please complete your payment to continue');
-              setShowGpay(true);
-            }
-          } else {
-            setSuccess('Google authentication successful! Complete payment.');
-          }
-        } catch (error) {
-          console.error("Error checking user document:", error);
-          setError('Error verifying your account. Please try again.');
+        setUserData({
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL
+        });
+        
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+          setSuccess('Google authentication successful! Complete payment.');
+        } else {
+          setSuccess('Welcome back! Complete your payment.');
         }
+        setShowGpay(true);
       }
-      setCheckingUser(false);
     });
     return unsubscribe;
-  }, [navigate]);
-
-  const checkPaymentStatus = async () => {
-    try {
-      setPaymentLoading(true);
-      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-      
-      if (userDoc.exists() && userDoc.data().paymentStatus === 'verified') {
-        navigate('/dashboard');
-      } else {
-        setTimeout(checkPaymentStatus, 3000);
-      }
-    } catch (error) {
-      console.error('Payment check failed:', error);
-      setError('Payment verification in progress. Please refresh later.');
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
+  }, []);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -101,20 +61,24 @@ const Signup = () => {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
+      setUserData({
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL
+      });
+
       const userDoc = await getDoc(doc(db, "users", result.user.uid));
-      
       if (!userDoc.exists()) {
-        setUserData({
-          uid: result.user.uid,
-          email: result.user.email,
-          displayName: result.user.displayName,
-          photoURL: result.user.photoURL
+        await setDoc(doc(db, "users", result.user.uid), {
+          paymentStatus: 'pending',
+          createdAt: new Date().toISOString()
         });
         setSuccess("Google auth successful! Complete payment.");
       } else {
-        setSuccess("Welcome back! Please complete your payment.");
-        setShowGpay(true);
+        setSuccess("Welcome back! Complete your payment.");
       }
+      setShowGpay(true);
     } catch (error) {
       setError(getFirebaseErrorMessage(error.code));
       console.error("Google sign-in error:", error);
@@ -135,43 +99,40 @@ const Signup = () => {
     }
   };
 
-  const handlePayment = () => {
-    setShowGpay(true);
-  };
+  const handlePaymentComplete = async () => {
+    try {
+      setPaymentLoading(true);
+      const upiRef = `PB${Date.now().toString().slice(-6)}`;
+      
+      // Open payment form
+      const formUrl = `https://docs.google.com/forms/d/e/1FAIpQLSfOMKIv-Hxs1QFhstIXh03Lh_3Nue09zpdF80vWvDM4Cf-UiQ/viewform?usp=pp_url&entry.825522545=${encodeURIComponent(userData.email)}&entry.883276811=${upiRef}`;
+      window.open(formUrl, '_blank');
+    
+      // Save payment info
+      await setDoc(doc(db, 'users', userData.uid), {
+        paymentStatus: 'pending',
+        upiReference: upiRef,
+        paymentInitiatedAt: new Date().toISOString()
+      }, { merge: true });
 
-  const handlePaymentComplete = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const upiRef = `PB${Date.now().toString().slice(-6)}`;
-    
-    const formUrl = `https://docs.google.com/forms/d/e/1FAIpQLSfOMKIv-Hxs1QFhstIXh03Lh_3Nue09zpdF80vWvDM4Cf-UiQ/viewform?usp=pp_url&entry.825522545=${encodeURIComponent(userData.email)}&entry.883276811=${upiRef}`;
-    
-    window.open(formUrl, '_blank');
-  
-    setDoc(doc(db, 'users', userData.uid), {
-      paymentStatus: 'pending',
-      upiReference: upiRef,
-      formOpenedAt: new Date().toISOString()
-    }).then(() => {
-      setSuccess('Payment submitted for verification. You will be redirected shortly.');
-      setTimeout(checkPaymentStatus, 3000);
-    }).catch(error => {
-      console.error("Error saving payment info:", error);
-      setError('Failed to save payment information. Please try again.');
-    });
+      setSuccess('Payment submitted for verification. You will be redirected automatically once verified.');
+      
+      // Redirect to payment-required page which will handle verification
+      navigate('/payment-required?redirect=/dashboard');
+      
+    } catch (error) {
+      console.error("Payment error:", error);
+      setError('Failed to process payment. Please try again.');
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   const getFirebaseErrorMessage = (code) => {
     switch (code) {
-      case 'auth/popup-closed-by-user':
-        return 'Sign in process was cancelled.';
-      case 'auth/network-request-failed':
-        return 'Network error. Please check your internet connection.';
-      case 'auth/too-many-requests':
-        return 'Too many attempts. Please try again later.';
-      case 'auth/operation-not-allowed':
-        return 'Google sign-in is not enabled. Please contact support.';
-      default:
-        return 'Sign in failed. Please try again.';
+      case 'auth/popup-closed-by-user': return 'Sign in cancelled';
+      case 'auth/network-request-failed': return 'Network error';
+      default: return 'Sign in failed. Please try again.';
     }
   };
 
@@ -190,117 +151,10 @@ const Signup = () => {
           </div>
           
           <div className="p-8">
-            {error && (
-              <Alert severity="error" className="mb-4">
-                {error}
-              </Alert>
-            )}
-            
-            {success && (
-              <Alert severity="success" className="mb-4">
-                {success}
-              </Alert>
-            )}
+            {error && <Alert severity="error" className="mb-4">{error}</Alert>}
+            {success && <Alert severity="success" className="mb-4">{success}</Alert>}
 
-            {checkingUser ? (
-              <div className="flex justify-center py-8">
-                <CircularProgress />
-              </div>
-            ) : userData ? (
-              <div className="space-y-5">
-                <div className="bg-green-50 p-4 rounded-lg border border-green-100 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <VerifiedIcon className="text-green-500 mr-2" />
-                    <p className="text-green-700">
-                      Signed in as <span className="font-semibold">{userData.email}</span>
-                    </p>
-                  </div>
-                  <button 
-                    onClick={handleSignOut}
-                    className="text-xs text-blue-600 hover:text-blue-800"
-                  >
-                    Sign out
-                  </button>
-                </div>
-                
-                {showGpay ? (
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                    <h3 className="font-bold text-blue-800 mb-2">Pay with GPay</h3>
-                    <div className="flex flex-col items-center">
-                      <div className="bg-white p-3 rounded-lg mb-3">
-                        <img 
-                          src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=dwaynedevaq96@okicici&pn=Piano%20Bestie&am=599&tn=1-year%20piano%20course%20access" 
-                          alt="GPay QR Code" 
-                          className="w-48 h-48"
-                        />
-                      </div>
-                      <p className="text-sm text-blue-700 mb-2">
-                        Scan this QR code to pay ₹599 using GPay
-                      </p>
-                      <div className="bg-yellow-50 p-2 rounded border border-yellow-200 text-sm text-yellow-700 mb-3">
-                        <p>UPI ID: <span className="font-mono">{gpayDetails.upiId}</span></p>
-                        <p>Amount: ₹{gpayDetails.amount}</p>
-                        <p>Name: {gpayDetails.name}</p>
-                      </div>
-                      <button
-                        onClick={handlePaymentComplete}
-                        className="w-full flex justify-center items-center bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                        disabled={paymentLoading}
-                      >
-                        {paymentLoading ? (
-                          <>
-                            <CircularProgress size={20} color="inherit" className="mr-2" />
-                            Verifying...
-                          </>
-                        ) : (
-                          "I've Made the Payment"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                      <p className="text-sm text-blue-700">
-                        <span className="font-semibold">Note:</span> ₹599 for 1-year access to all piano courses
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-start">
-                      <div className="flex items-center h-5">
-                        <input
-                          id="terms"
-                          name="terms"
-                          type="checkbox"
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-blue-300 rounded"
-                          required
-                        />
-                      </div>
-                      <div className="ml-3 text-sm">
-                        <label htmlFor="terms" className="text-blue-700">
-                          I agree to the <Link to='/terms' className="font-medium text-blue-600 hover:text-blue-500">Terms</Link> and <Link to='/privacy' className="font-medium text-blue-600 hover:text-blue-500">Privacy Policy</Link>
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={handlePayment}
-                      disabled={paymentLoading}
-                      className="w-full flex justify-center items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-70"
-                    >
-                      {paymentLoading ? (
-                        <>
-                          <CircularProgress size={20} color="inherit" className="mr-2" />
-                          Processing...
-                        </>
-                      ) : (
-                        'Pay ₹599 via GPay'
-                      )}
-                    </button>
-                  </>
-                )}
-              </div>
-            ) : (
+            {!userData ? (
               <>
                 <div className="space-y-5">
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
@@ -337,6 +191,67 @@ const Signup = () => {
                   </p>
                 </div>
               </>
+            ) : (
+              <div className="space-y-5">
+                <div className="bg-green-50 p-4 rounded-lg border border-green-100 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <VerifiedIcon className="text-green-500 mr-2" />
+                    <p className="text-green-700">
+                      Signed in as <span className="font-semibold">{userData.email}</span>
+                    </p>
+                  </div>
+                  <button 
+                    onClick={handleSignOut}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Sign out
+                  </button>
+                </div>
+                
+                {showGpay ? (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <h3 className="font-bold text-blue-800 mb-2">Pay with GPay</h3>
+                    <div className="flex flex-col items-center">
+                      <div className="bg-white p-3 rounded-lg mb-3">
+                        <img 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${gpayDetails.upiId}&pn=${encodeURIComponent(gpayDetails.name)}&am=${gpayDetails.amount}&tn=${encodeURIComponent(gpayDetails.note)}`} 
+                          alt="GPay QR Code" 
+                          className="w-48 h-48"
+                        />
+                      </div>
+                      <p className="text-sm text-blue-700 mb-2">
+                        Scan this QR code to pay ₹{gpayDetails.amount} using GPay
+                      </p>
+                      <div className="bg-yellow-50 p-2 rounded border border-yellow-200 text-sm text-yellow-700 mb-3">
+                        <p>UPI ID: <span className="font-mono">{gpayDetails.upiId}</span></p>
+                        <p>Amount: ₹{gpayDetails.amount}</p>
+                        <p>Name: {gpayDetails.name}</p>
+                      </div>
+                      <button
+                        onClick={handlePaymentComplete}
+                        className="w-full flex justify-center items-center bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                        disabled={paymentLoading}
+                      >
+                        {paymentLoading ? (
+                          <>
+                            <CircularProgress size={20} color="inherit" className="mr-2" />
+                            Processing...
+                          </>
+                        ) : (
+                          "I've Made the Payment"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowGpay(true)}
+                    className="w-full flex justify-center items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                    Show Payment Options
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

@@ -4,7 +4,6 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
-// Cache helper functions with improved error handling
 const usePaymentStatusCache = () => {
   const getCachedPaymentStatus = (userId) => {
     try {
@@ -12,14 +11,14 @@ const usePaymentStatusCache = () => {
       if (!cachedData) return null;
       
       const { status, timestamp } = JSON.parse(cachedData);
-      // Cache valid for 1 hour (3600000 ms)
+      // Cache valid for 1 hour
       if (Date.now() - timestamp > 3600000) {
         localStorage.removeItem(`paymentStatus_${userId}`);
         return null;
       }
       return status;
     } catch (error) {
-      console.error('Error reading payment status cache:', error);
+      console.error('Error reading payment cache:', error);
       return null;
     }
   };
@@ -43,11 +42,9 @@ const PaymentProtectedRoute = ({ children }) => {
   const authLoading = useSelector((state) => state.auth.loading);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [firestoreLoading, setFirestoreLoading] = useState(true);
-  const [userChecked, setUserChecked] = useState(false);
   const location = useLocation();
   const { getCachedPaymentStatus, setCachedPaymentStatus } = usePaymentStatusCache();
 
-  // Memoized loading component to prevent unnecessary re-renders
   const LoadingFallback = useMemo(() => (
     <div className="flex justify-center items-center h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -56,9 +53,7 @@ const PaymentProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     if (authLoading) return;
-    
-    setUserChecked(true);
-    
+
     if (!currentUser) {
       setFirestoreLoading(false);
       return;
@@ -84,12 +79,11 @@ const PaymentProtectedRoute = ({ children }) => {
             setCachedPaymentStatus(currentUser.uid, newStatus);
           } else {
             setPaymentStatus('pending');
-            setCachedPaymentStatus(currentUser.uid, 'pending');
           }
           setFirestoreLoading(false);
         });
       } catch (error) {
-        console.error('Payment status check failed:', error);
+        console.error('Payment check error:', error);
         setPaymentStatus('pending');
         setFirestoreLoading(false);
       }
@@ -97,38 +91,19 @@ const PaymentProtectedRoute = ({ children }) => {
 
     fetchPaymentStatus();
 
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    return () => unsubscribe && unsubscribe();
   }, [currentUser, authLoading, getCachedPaymentStatus, setCachedPaymentStatus]);
 
-  // Early return for loading states
-  if (!userChecked || authLoading) {
+  if (authLoading || (!paymentStatus && firestoreLoading)) {
     return LoadingFallback;
   }
 
-  // Redirect unauthenticated users to signup with return URL
   if (!currentUser) {
-    return (
-      <Navigate 
-        to={`/signup?redirect=${encodeURIComponent(location.pathname + location.search)}`} 
-        replace 
-      />
-    );
+    return <Navigate to={`/signup?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
-  if (firestoreLoading && !paymentStatus) {
-    return LoadingFallback;
-  }
-
-  // Redirect unpaid users to payment page with return URL
   if (paymentStatus !== 'verified') {
-    return (
-      <Navigate 
-        to={`/payment-required?redirect=${encodeURIComponent(location.pathname + location.search)}`} 
-        replace 
-      />
-    );
+    return <Navigate to={`/payment-required?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
   return children;
