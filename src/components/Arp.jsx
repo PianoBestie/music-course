@@ -793,44 +793,62 @@ const Arp = () => {
   };
 
   // Play a note using Web Audio API
-  const playNote = useCallback((noteInput, duration = null) => {
+ const playNote = useCallback((noteInput, duration = null, velocity = 127) => {
     initAudioContext();
     const audioContext = audioContextRef.current;
-    const gainNode = gainNodeRef.current;
-
-    // Determine frequency based on input type
-    let frequency;
+    
+    // Convert input to MIDI number
+    let midiNumber;
     let noteName;
     
     if (typeof noteInput === 'number') {
-      frequency = getNoteFrequency(noteInput);
+      midiNumber = noteInput;
       noteName = midiToNoteName(noteInput);
     } else {
       const note = noteInput.slice(0, -1);
       const octave = parseInt(noteInput.slice(-1));
-      const midiNote = noteToMidiNumber(note, octave);
-      frequency = getNoteFrequency(midiNote);
+      midiNumber = noteToMidiNumber(note, octave);
       noteName = noteInput;
     }
 
-    // Stop any existing oscillator for this note
-    if (oscillatorsRef.current[noteName]) {
-      oscillatorsRef.current[noteName].stop();
-      delete oscillatorsRef.current[noteName];
-    }
-
+    // Create audio nodes with envelope
+    const now = audioContext.currentTime;
     const oscillator = audioContext.createOscillator();
-    oscillator.type = 'sine';
-    oscillator.frequency.value = frequency;
-    oscillator.connect(gainNode);
-    oscillator.start();
-
-    oscillatorsRef.current[noteName] = oscillator;
-
+    const gain = audioContext.createGain();
+    
+    // Configure oscillator
+    oscillator.type = 'triangle';
+    oscillator.frequency.value = getNoteFrequency(midiNumber);
+    
+    // Configure envelope (ADSR)
+    const attackTime = 0.02;
+    const decayTime = 0.1;
+    const sustainLevel = velocity / 127 * 0.6;
+    const releaseTime = 0.1;
+    
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(sustainLevel, now + attackTime);
+    gain.gain.exponentialRampToValueAtTime(sustainLevel * 0.8, now + attackTime + decayTime);
+    
+    // Connect nodes
+    oscillator.connect(gain);
+    gain.connect(gainNodeRef.current);
+    oscillator.start(now);
+    
+    // Store oscillator with MIDI number as key
+    oscillatorsRef.current[midiNumber] = { oscillator, gain };
+    
+    // Schedule note off if duration is provided
     if (duration !== null) {
-      oscillator.stop(audioContext.currentTime + duration);
+      const releaseStart = now + duration - releaseTime;
+      if (releaseStart > now) {
+        gain.gain.setValueAtTime(sustainLevel, releaseStart);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      }
+      oscillator.stop(now + duration);
     }
-    return noteName;
+
+    return { midiNumber, noteName };
   }, [initAudioContext]);
 
   // Stop a specific note
