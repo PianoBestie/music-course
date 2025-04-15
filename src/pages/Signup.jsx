@@ -225,7 +225,7 @@ const Signup = () => {
                       <div className="bg-white p-3 rounded-lg mb-3">
                         {/* Replace with your actual QR code image */}
                         <img 
-                          src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=your-upi-id@okhdfcbank&pn=Piano%20Bestie&am=599&tn=1-year%20piano%20course%20access" 
+                          src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=dwaynedevaq96@okicici&pn=Piano%20Bestie&am=599&tn=1-year%20piano%20course%20access" 
                           alt="GPay QR Code" 
                           className="w-48 h-48"
                         />
