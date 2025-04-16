@@ -109,26 +109,28 @@ const Signup = () => {
     }
   };
 
-  const handlePaymentSubmission = async () => {
-    try {
-      setPaymentLoading(true);
-      const paymentRef = `PB${Date.now().toString().slice(-6)}`;
-      
-      await setDoc(doc(db, 'users', userData.uid), {
-        paymentStatus: 'pending',
-        paymentReference: paymentRef,
-        mail: userData?.email,  // Fixed syntax here
-        paymentInitiatedAt: new Date().toISOString(),
-      }, { merge: true });
-  
-      navigate('/payment-required?redirect=/dashboard');
-    } catch (error) {
-      setError('Payment submission failed. Please try again.');
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
 
+
+  const handlePaymentSubmission  = () => {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Generate UPI reference (optional)
+    const upiRef = `PB${Date.now().toString().slice(-6)}`;
+    
+    // Form URL with ACTUAL field IDs
+    const formUrl = `https://docs.google.com/forms/d/e/1FAIpQLSfOMKIv-Hxs1QFhstIXh03Lh_3Nue09zpdF80vWvDM4Cf-UiQ/viewform?usp=pp_url&entry.825522545=${encodeURIComponent(userData.email)}&entry.883276811=${upiRef}`;
+    
+    window.open(formUrl, '_blank');
+  
+    // Save to Firebase
+    setDoc(doc(db, 'users', userData.uid), {
+      paymentStatus: 'pending',
+      mail: userData.email,
+      upiReference: upiRef, // Store for verification
+      formOpenedAt: new Date().toISOString()
+    });
+  };
   const handleSignOut = async () => {
     try {
       await signOut(auth);
