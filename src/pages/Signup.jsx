@@ -117,8 +117,8 @@ const Signup = () => {
       await setDoc(doc(db, 'users', userData.uid), {
         paymentStatus: 'pending',
         paymentReference: paymentRef,
+        mail:userData?.email,
         paymentInitiatedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString()
       }, { merge: true });
 
       navigate('/payment-required?redirect=/dashboard');
