@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Piano as PianoIcon, Verified as VerifiedIcon } from '@mui/icons-material';
+import { Piano as PianoIcon, Verified as VerifiedIcon, CheckCircle } from '@mui/icons-material';
 import { Google } from '@mui/icons-material';
 import { CircularProgress, Alert, Button } from '@mui/material';
 import { 
@@ -18,7 +18,7 @@ const Signup = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [userData, setUserData] = useState(null);
-  const [showPayment, setShowPayment] = useState(false);
+  const [paymentVerified, setPaymentVerified] = useState(false);
   const navigate = useNavigate();
 
   // Payment details
@@ -29,10 +29,19 @@ const Signup = () => {
     note: '1-year piano course access'
   };
 
+  // Check payment status in Firestore
+  const checkPaymentStatus = async (userId) => {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    return userDoc.exists() && userDoc.data().paymentStatus === 'verified';
+  };
+
   // Handle auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        const isVerified = await checkPaymentStatus(user.uid);
+        setPaymentVerified(isVerified);
+        
         setUserData({
           uid: user.uid,
           email: user.email,
@@ -40,17 +49,20 @@ const Signup = () => {
           photoURL: user.photoURL
         });
 
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (!userDoc.exists()) {
-          await setDoc(doc(db, 'users', user.uid), {
-            paymentStatus: 'pending',
-            createdAt: new Date().toISOString()
-          });
-          setSuccess('Account created! Complete payment to continue');
+        if (!isVerified) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (!userDoc.exists()) {
+            await setDoc(doc(db, 'users', user.uid), {
+              paymentStatus: 'pending',
+              createdAt: new Date().toISOString()
+            });
+            setSuccess('Account created! Complete payment to continue');
+          } else {
+            setSuccess('Welcome back! Complete your payment');
+          }
         } else {
-          setSuccess('Welcome back! Complete your payment');
+          setSuccess('Payment verified! Your courses are unlocked');
         }
-        setShowPayment(true);
       }
     });
     return unsubscribe;
@@ -64,6 +76,9 @@ const Signup = () => {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
+      const isVerified = await checkPaymentStatus(result.user.uid);
+      setPaymentVerified(isVerified);
+      
       setUserData({
         uid: result.user.uid,
         email: result.user.email,
@@ -71,14 +86,20 @@ const Signup = () => {
         photoURL: result.user.photoURL
       });
 
-      const userDoc = await getDoc(doc(db, "users", result.user.uid));
-      if (!userDoc.exists()) {
-        await setDoc(doc(db, "users", result.user.uid), {
-          paymentStatus: 'pending',
-          createdAt: new Date().toISOString()
-        });
+      if (!isVerified) {
+        const userDoc = await getDoc(doc(db, "users", result.user.uid));
+        if (!userDoc.exists()) {
+          await setDoc(doc(db, "users", result.user.uid), {
+            paymentStatus: 'pending',
+            createdAt: new Date().toISOString()
+          });
+          setSuccess('Account created! Complete payment to continue');
+        } else {
+          setSuccess('Welcome back! Complete your payment');
+        }
+      } else {
+        setSuccess('Payment verified! Your courses are unlocked');
       }
-      setShowPayment(true);
     } catch (error) {
       setError(error.message.includes('popup') 
         ? 'Sign in cancelled' 
@@ -112,11 +133,15 @@ const Signup = () => {
     try {
       await signOut(auth);
       setUserData(null);
-      setShowPayment(false);
+      setPaymentVerified(false);
       setSuccess('');
     } catch (error) {
       setError('Error signing out. Please try again.');
     }
+  };
+
+  const handleAccessDashboard = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -169,68 +194,72 @@ const Signup = () => {
                 </Link>
               </p>
             </div>
+          ) : paymentVerified ? (
+            <div className="space-y-4">
+              <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 text-center">
+                <CheckCircle className="text-emerald-500 text-4xl mx-auto mb-3" />
+                <h3 className="font-bold text-emerald-800 text-lg mb-2">
+                  Payment Verified Successfully!
+                </h3>
+                <p className="text-emerald-700 mb-4">
+                Full course access has been granted.
+                </p>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="success"
+                  onClick={handleAccessDashboard}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  Access Your Dashboard
+                </Button>
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex items-center justify-between">
-                <div className="flex items-center">
-                  <VerifiedIcon className="text-green-500 mr-2" />
-                  <span className="text-green-700">
-                    Signed in as <span className="font-semibold">{userData.email}</span>
-                  </span>
-                </div>
-                <button 
-                  onClick={handleSignOut}
-                  className="text-xs text-blue-600 hover:text-blue-800"
-                >
-                  Sign out
-                </button>
-              </div>
-
-              {showPayment && (
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                  <h3 className="font-bold text-blue-800 mb-3 text-center">
-                    Complete Your Payment
-                  </h3>
-                  
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="bg-white p-3 rounded-lg shadow-sm">
-                      <img 
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=${paymentDetails.upiId}&pn=${encodeURIComponent(paymentDetails.name)}&am=${paymentDetails.amount}&tn=${encodeURIComponent(paymentDetails.note)}`} 
-                        alt="UPI QR Code"
-                        className="w-full h-auto"
-                      />
-                    </div>
-
-                    <div className="bg-yellow-50 p-3 rounded border border-yellow-200 w-full">
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <span className="text-gray-600">UPI ID:</span>
-                        <span className="font-mono">{paymentDetails.upiId}</span>
-                        
-                        <span className="text-gray-600">Amount:</span>
-                        <span>₹{paymentDetails.amount}</span>
-                        
-                        <span className="text-gray-600">Name:</span>
-                        <span>{paymentDetails.name}</span>
-                      </div>
-                    </div>
-
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      color="primary"
-                      onClick={handlePaymentSubmission}
-                      disabled={paymentLoading}
-                      startIcon={paymentLoading ? <CircularProgress size={20} /> : null}
-                    >
-                      {paymentLoading ? 'Processing...' : 'I Have Made Payment'}
-                    </Button>
-
-                    <p className="text-xs text-gray-500 text-center">
-                      After payment, you'll be redirected automatically
-                    </p>
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <h3 className="font-bold text-blue-800 mb-3 text-center">
+                  Complete Your Payment
+                </h3>
+                
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="bg-white p-3 rounded-lg shadow-sm">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=${paymentDetails.upiId}&pn=${encodeURIComponent(paymentDetails.name)}&am=${paymentDetails.amount}&tn=${encodeURIComponent(paymentDetails.note)}`} 
+                      alt="UPI QR Code"
+                      className="w-full h-auto"
+                    />
                   </div>
+
+                  <div className="bg-yellow-50 p-3 rounded border border-yellow-200 w-full">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <span className="text-gray-600">UPI ID:</span>
+                      <span className="font-mono">{paymentDetails.upiId}</span>
+                      
+                      <span className="text-gray-600">Amount:</span>
+                      <span>₹{paymentDetails.amount}</span>
+                      
+                      <span className="text-gray-600">Name:</span>
+                      <span>{paymentDetails.name}</span>
+                    </div>
+                  </div>
+
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    onClick={handlePaymentSubmission}
+                    disabled={paymentLoading}
+                    startIcon={paymentLoading ? <CircularProgress size={20} /> : null}
+                  >
+                    {paymentLoading ? 'Processing...' : 'I Have Made Payment'}
+                  </Button>
+
+                  <p className="text-xs text-gray-500 text-center">
+                    After payment verification, you'll gain full access
+                  </p>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>

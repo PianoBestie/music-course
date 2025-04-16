@@ -1,88 +1,69 @@
-// src/redux/authSlice.js
-
+// authSlice.js
 import { createSlice } from '@reduxjs/toolkit';
-import { auth } from '../firebaseConfig';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { auth, db } from '../firebaseConfig';
 
 const initialState = {
   currentUser: null,
-  loading: true,
-  error: null,
+  paymentStatus: null,
+  authLoading: true,    // Tracks auth state loading
+  paymentLoading: true, // Tracks payment status loading
+  error: null
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setUser(state, action) {
-      state.currentUser = action.payload;
-      state.loading = false;
-      state.error = null;
+    setAuthState: (state, action) => {
+      state.currentUser = action.payload.user;
+      state.paymentStatus = action.payload.status;
+      state.authLoading = false;
+      state.paymentLoading = false;
     },
-    setLoading(state, action) {
-      state.loading = action.payload;
+    setAuthLoading: (state, action) => {
+      state.authLoading = action.payload;
     },
-    setError(state, action) {
+    setPaymentLoading: (state, action) => {
+      state.paymentLoading = action.payload;
+    },
+    setError: (state, action) => {
       state.error = action.payload;
-      state.loading = false;
     },
-    clearUser(state) {
+    clearAuth: (state) => {
       state.currentUser = null;
-      state.loading = false;
-    },
-  },
+      state.paymentStatus = null;
+    }
+  }
 });
 
-export const { setUser, setLoading, setError, clearUser } = authSlice.actions;
-
-/**
- * Thunk: Listens for Firebase Auth state changes.
- * Automatically updates Redux store when user signs in or out.
- */
-export const initAuthListener = () => (dispatch) => {
-  dispatch(setLoading(true));
-
-  return auth.onAuthStateChanged(
-    (firebaseUser) => {
-      if (firebaseUser) {
-        const userData = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          emailVerified: firebaseUser.emailVerified,
-          photoURL: firebaseUser.photoURL,
-        };
-        dispatch(setUser(userData));
-      } else {
-        dispatch(clearUser());
-      }
-    },
-    (error) => {
-      dispatch(setError(error.message));
+export const initializeAuthListener = () => (dispatch) => {
+  dispatch(setAuthLoading(true));
+  
+  const authUnsubscribe = auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      const firestoreUnsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+        const status = doc.exists() ? doc.data().paymentStatus : 'pending';
+        dispatch(setAuthState({
+          user: {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL
+          },
+          status
+        }));
+      });
+      
+      return firestoreUnsubscribe;
+    } else {
+      dispatch(clearAuth());
+      dispatch(setAuthLoading(false));
     }
-  );
+  });
+
+  return authUnsubscribe;
 };
 
-/**
- * Thunk: Manually sets current user from Firebase (if already signed in).
- * Use this if you're not relying on onAuthStateChanged listener.
- */
-export const setCurrentUserFromAuth = () => (dispatch) => {
-  dispatch(setLoading(true));
-
-  const user = auth.currentUser;
-
-  if (user) {
-    const userData = {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-      emailVerified: user.emailVerified,
-      photoURL: user.photoURL,
-    };
-    dispatch(setUser(userData));
-  } else {
-    dispatch(clearUser());
-  }
-};
-
+export const { setAuthState, setAuthLoading, setPaymentLoading, setError, clearAuth,setloading } = authSlice.actions;
 export default authSlice.reducer;

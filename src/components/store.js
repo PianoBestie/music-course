@@ -7,5 +7,5 @@ export const store = configureStore({
   reducer: {
     music: musicReducer,
     auth: authReducer,
-  },
+  }
 });

@@ -25,7 +25,7 @@ import ExercisePiano from "./components/ExercisePiano";
 import PaymentProtectedRoute from "./pages/PaymentProtectedRoute";
 import PaymentRequired from "./pages/PaymentRequired";
 import { useDispatch } from 'react-redux';
-import { initAuthListener } from './components/authSlice';
+import { initializeAuthListener } from './components/authSlice'; // Changed from initAuthListener
 import AdminPanel from "./components/AdminPanel";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -48,11 +48,10 @@ function App() {
 
   // Initialize auth listener and clean up
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      dispatch(initAuthListener());
-    });
-    return () => unsubscribe();
+    const unsubscribe = dispatch(initializeAuthListener()); // Changed to initializeAuthListener
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [dispatch]);
 
   // Handle portrait/landscape detection with cleanup
