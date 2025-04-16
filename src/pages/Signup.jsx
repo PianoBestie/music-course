@@ -117,10 +117,10 @@ const Signup = () => {
       await setDoc(doc(db, 'users', userData.uid), {
         paymentStatus: 'pending',
         paymentReference: paymentRef,
-        mail:userData?.email,
+        mail: userData?.email,  // Fixed syntax here
         paymentInitiatedAt: new Date().toISOString(),
       }, { merge: true });
-
+  
       navigate('/payment-required?redirect=/dashboard');
     } catch (error) {
       setError('Payment submission failed. Please try again.');
