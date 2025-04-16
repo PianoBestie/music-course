@@ -36,7 +36,7 @@ const authSlice = createSlice({
   }
 });
 
-export const initializeAuthListener = () => (dispatch) => {
+export const initAuthListener = () => (dispatch) => {
   dispatch(setAuthLoading(true));
   
   const authUnsubscribe = auth.onAuthStateChanged(async (user) => {
