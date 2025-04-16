@@ -1,17 +1,15 @@
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { AnimatePresence } from "framer-motion";
-import { useDispatch, useSelector } from 'react-redux';
 import Navbar from "./components/Navbar";
-import ScrollToTop from "./components/ScrollToTop";
+import { auth } from './firebaseConfig';
 // Page Components
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Course from "./pages/Course";
 import DashBoard from "./pages/DashBoard";
-import NotFound from "./pages/NotFound";
 // Practice Components
 import Practice from "./components/Practice";
 import Interactive from "./components/Interactive";
@@ -24,9 +22,10 @@ import PianoHandPosition from "./components/PianoHandPosition";
 import ExercisePiano from "./components/ExercisePiano";
 import PaymentProtectedRoute from "./pages/PaymentProtectedRoute";
 import PaymentRequired from "./pages/PaymentRequired";
-import { initializeAuthListener } from './components/authSlice';
+import { useDispatch } from 'react-redux';
+import { initAuthListener } from './components/authSlice';
 import AdminPanel from "./components/AdminPanel";
-import TermsOfService from "./pages/TermsOfService";
+import NotFound from "./pages/NotFound";
 
 const PortraitWarning = () => (
   <div className="portrait-warning">
@@ -38,37 +37,42 @@ const PortraitWarning = () => (
 
 function App() {
   const dispatch = useDispatch();
-  const currentUser = useSelector(state => state.auth.currentUser); // Changed from user to currentUser
+  const [user, setUser] = useState(null);
   const [isPortrait, setIsPortrait] = useState(
     typeof window !== 'undefined' && window.innerHeight > window.innerWidth
   );
   const location = useLocation();
+  const [currentPath, setCurrentPath] = useState(location.pathname);
 
-  // Initialize auth listener
+  // Initialize auth listener and clean up
   useEffect(() => {
-    const unsubscribe = dispatch(initializeAuthListener());
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      dispatch(initAuthListener());
+    });
+    return () => unsubscribe();
   }, [dispatch]);
 
-  // Handle portrait/landscape detection
+  // Handle portrait/landscape detection with cleanup
   useLayoutEffect(() => {
     const handleResize = () => {
       setIsPortrait(window.innerHeight > window.innerWidth);
     };
 
-    handleResize(); // Initial check
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const ADMIN_UID = "HH6FKWxOYwNXCw401GXS8Ukzt773";
+  // Reset state when route changes
+  useEffect(() => {
+    if (location.pathname !== currentPath) {
+      setCurrentPath(location.pathname);
+    }
+  }, [location.pathname, currentPath]);
 
-  // Memoize admin check to prevent unnecessary recomputations
-  const isAdmin = useMemo(() => {
-    return currentUser?.uid === ADMIN_UID;
-  }, [currentUser]);
+  // Your admin UID
+  const ADMIN_UID = "HH6FKWxOYwNXCw401GXS8Ukzt773";
 
   return (
     <>
@@ -90,24 +94,22 @@ function App() {
         <PortraitWarning />
       ) : (
         <>
-          <ScrollToTop />
           <Navbar />
           <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
-            <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<Home />} />
+            <Routes location={location} key={location.key}> {/* Changed from location.pathname */}
+              {/* Conditional route for admin */}
+              {user && user.uid === ADMIN_UID ? (
+                <Route path="/" element={<AdminPanel />} />
+              ) : (
+                <Route path="/" element={<Home />} />
+              )}
               
-              {/* Protected Admin Route */}
-              <Route 
-                path="/adminpanel" 
-                element={isAdmin ? <AdminPanel /> : <Navigate to="/" replace />} 
-              />
-              
+              <Route path="/adminpanel" element={<AdminPanel/>} />
               <Route path="/course" element={<Course />} />
               <Route path="/practice" element={<Practice />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/payment-required" element={<PaymentRequired />} />
-              
+              <Route path="/payment-required" element={<PaymentRequired/>} />
               <Route 
                 path="/dashboard" 
                 element={
@@ -116,7 +118,6 @@ function App() {
                   </PaymentProtectedRoute>
                 } 
               />
-              
               {/* Music Practice Routes */}
               <Route path="/interactive" element={<Interactive />} />
               <Route path="/chords-piano" element={<ChordsPiano />} />
@@ -126,7 +127,6 @@ function App() {
               <Route path="/durations" element={<Durations />} />
               <Route path="/piano-hand-position" element={<PianoHandPosition />} />
               <Route path="/exercise-piano" element={<ExercisePiano />} />
-              <Route path="/terms" element={<TermsOfService />} />
               
               {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
