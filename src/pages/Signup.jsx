@@ -119,8 +119,7 @@ const Signup = () => {
     const upiRef = `PB${Date.now().toString().slice(-6)}`;
     
     // Form URL with ACTUAL field IDs
-    const formUrl = `https://docs.google.com/forms/d/e/1FAIpQLSfOMKIv-Hxs1QFhstIXh03Lh_3Nue09zpdF80vWvDM4Cf-UiQ/viewform?usp=pp_url&entry.825522545=${encodeURIComponent(userData.email)}&entry.883276811=${upiRef}`;
-    
+    const formUrl = `https://docs.google.com/forms/d/e/1FAIpQLSfOMKIv-Hxs1QFhstIXh03Lh_3Nue09zpdF80vWvDM4Cf-UiQ/viewform?usp=pp_url&entry.825522545=${encodeURIComponent(userData.email)}&entry.883276811=${upiRef}`; 
     window.open(formUrl, '_blank');
   
     // Save to Firebase

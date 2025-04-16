@@ -1,10 +1,10 @@
-import { Routes, Route, useLocation } from "react-router-dom";
-import { useState, useEffect, useLayoutEffect } from "react";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { useEffect, useLayoutEffect, useMemo } from "react";
 import { Toaster } from "react-hot-toast";
 import { AnimatePresence } from "framer-motion";
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from "./components/Navbar";
 import ScrollToTop from "./components/ScrollToTop";
-import { auth } from './firebaseConfig';
 // Page Components
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
@@ -24,8 +24,7 @@ import PianoHandPosition from "./components/PianoHandPosition";
 import ExercisePiano from "./components/ExercisePiano";
 import PaymentProtectedRoute from "./pages/PaymentProtectedRoute";
 import PaymentRequired from "./pages/PaymentRequired";
-import { useDispatch } from 'react-redux';
-import { initializeAuthListener } from './components/authSlice'; // Changed from initAuthListener
+import { initializeAuthListener } from './components/authSlice';
 import AdminPanel from "./components/AdminPanel";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -39,40 +38,33 @@ const PortraitWarning = () => (
 
 function App() {
   const dispatch = useDispatch();
-  const [user, setUser] = useState(null);
+  const user = useSelector(state => state.auth.user); // Get user from Redux
   const [isPortrait, setIsPortrait] = useState(
     typeof window !== 'undefined' && window.innerHeight > window.innerWidth
   );
   const location = useLocation();
-  const [currentPath, setCurrentPath] = useState(location.pathname);
 
-  // Initialize auth listener and clean up
+  // Initialize auth listener
   useEffect(() => {
-    const unsubscribe = dispatch(initializeAuthListener()); // Changed to initializeAuthListener
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    const unsubscribe = dispatch(initializeAuthListener());
+    return () => unsubscribe();
   }, [dispatch]);
 
-  // Handle portrait/landscape detection with cleanup
+  // Handle portrait/landscape detection
   useLayoutEffect(() => {
     const handleResize = () => {
       setIsPortrait(window.innerHeight > window.innerWidth);
     };
 
-    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Reset state when route changes
-  useEffect(() => {
-    if (location.pathname !== currentPath) {
-      setCurrentPath(location.pathname);
-    }
-  }, [location.pathname, currentPath]);
-
-  const ADMIN_UID = "HH6FKWxOYwNXCw401GXS8Ukzt773";
+  // Memoize admin check to prevent unnecessary recomputations
+  const isAdmin = useMemo(() => {
+    const ADMIN_UID = "HH6FKWxOYwNXCw401GXS8Ukzt773";
+    return user?.uid === ADMIN_UID;
+  }, [user]);
 
   return (
     <>
@@ -98,27 +90,29 @@ function App() {
           <Navbar />
           <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
             <Routes location={location} key={location.pathname}>
-              {/* Conditional route for admin */}
-              {user && user.uid === ADMIN_UID ? (
-                <Route path="/" element={<AdminPanel />} />
-              ) : (
-                <Route path="/" element={<Home />} />
-              )}
+              <Route path="/" element={<Home />} />
               
-              <Route path="/adminpanel" element={<AdminPanel/>} />
+              {/* Protected Admin Route */}
+              <Route 
+                path="/adminpanel" 
+                element={isAdmin ? <AdminPanel /> : <Navigate to="/" replace />} 
+              />
+              
               <Route path="/course" element={<Course />} />
               <Route path="/practice" element={<Practice />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/payment-required" element={<PaymentRequired/>} />
+              <Route path="/payment-required" element={<PaymentRequired />} />
+              
               <Route 
-                path="/dashBoard" 
+                path="/dashboard" 
                 element={
                   <PaymentProtectedRoute>
                     <DashBoard />
                   </PaymentProtectedRoute>
                 } 
               />
+              
               {/* Music Practice Routes */}
               <Route path="/interactive" element={<Interactive />} />
               <Route path="/chords-piano" element={<ChordsPiano />} />
