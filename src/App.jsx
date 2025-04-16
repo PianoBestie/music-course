@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { useEffect, useLayoutEffect, useMemo,useState} from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from 'react-redux';
@@ -38,7 +38,7 @@ const PortraitWarning = () => (
 
 function App() {
   const dispatch = useDispatch();
-  const user = useSelector(state => state.auth.user); // Get user from Redux
+  const currentUser = useSelector(state => state.auth.currentUser); // Changed from user to currentUser
   const [isPortrait, setIsPortrait] = useState(
     typeof window !== 'undefined' && window.innerHeight > window.innerWidth
   );
@@ -47,7 +47,9 @@ function App() {
   // Initialize auth listener
   useEffect(() => {
     const unsubscribe = dispatch(initializeAuthListener());
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [dispatch]);
 
   // Handle portrait/landscape detection
@@ -56,15 +58,17 @@ function App() {
       setIsPortrait(window.innerHeight > window.innerWidth);
     };
 
+    handleResize(); // Initial check
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const ADMIN_UID = "HH6FKWxOYwNXCw401GXS8Ukzt773";
+
   // Memoize admin check to prevent unnecessary recomputations
   const isAdmin = useMemo(() => {
-    const ADMIN_UID = "HH6FKWxOYwNXCw401GXS8Ukzt773";
-    return user?.uid === ADMIN_UID;
-  }, [user]);
+    return currentUser?.uid === ADMIN_UID;
+  }, [currentUser]);
 
   return (
     <>

@@ -1,4 +1,3 @@
-// authSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
@@ -6,8 +5,8 @@ import { auth, db } from '../firebaseConfig';
 const initialState = {
   currentUser: null,
   paymentStatus: null,
-  authLoading: true,    // Tracks auth state loading
-  paymentLoading: true, // Tracks payment status loading
+  authLoading: true,
+  paymentLoading: true,
   error: null
 };
 
@@ -42,7 +41,8 @@ export const initializeAuthListener = () => (dispatch) => {
   
   const authUnsubscribe = auth.onAuthStateChanged(async (user) => {
     if (user) {
-      const firestoreUnsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+      // Return the Firestore unsubscribe function
+      return onSnapshot(doc(db, 'users', user.uid), (doc) => {
         const status = doc.exists() ? doc.data().paymentStatus : 'pending';
         dispatch(setAuthState({
           user: {
@@ -54,16 +54,17 @@ export const initializeAuthListener = () => (dispatch) => {
           status
         }));
       });
-      
-      return firestoreUnsubscribe;
     } else {
       dispatch(clearAuth());
       dispatch(setAuthLoading(false));
+      return () => {}; // Return empty function if no user
     }
   });
 
-  return authUnsubscribe;
+  return () => {
+    authUnsubscribe();
+  };
 };
 
-export const { setAuthState, setAuthLoading, setPaymentLoading, setError, clearAuth,setloading } = authSlice.actions;
+export const { setAuthState, setAuthLoading, setPaymentLoading, setError, clearAuth } = authSlice.actions;
 export default authSlice.reducer;
