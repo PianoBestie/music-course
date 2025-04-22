@@ -76,6 +76,7 @@ function App() {
 
   return (
     <>
+        <DashBoard />
       <Toaster 
         position="top-center"
         toastOptions={{

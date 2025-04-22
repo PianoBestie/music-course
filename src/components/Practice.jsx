@@ -54,6 +54,8 @@ const [mp3Loaded, setMp3Loaded] = useState(false);
   const synthRef = useRef(null);
   const scheduledEventsRef = useRef(null);
   const timeoutRef = useRef(null);
+const [isTamil,setIsTamil] =useState(false);
+
   // Piano keys configuration
   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"];
   const blackKeys = { "C#": 0, "D#": 1, "F#": 3, "G#": 4, "A#": 5 };
@@ -66,6 +68,7 @@ const [showNotes, setShowNotes] = useState(false);
 const [midiNotes, setMidiNotes] = useState([]);
 const [rootNote, setRootNote] = useState("C"); // Default root note
 const [isLoading, setIsLoading] = useState(false);
+
 const [exercises, setExercises] = useState(() => {
   try {
     const savedExercises = localStorage.getItem('musicExercises');
@@ -91,7 +94,12 @@ const [exercises, setExercises] = useState(() => {
     chordKnowledge: {}
   };
 });
-
+const [octaveRange, setOctaveRange] = useState({ 
+  start: 4, 
+  end: 6,
+  lowestNote: 60, // C4
+  highestNote: 79  // G5
+});
   useEffect(() => {
     loadExercises();
   }, []);
@@ -254,21 +262,22 @@ const ExerciseCard = ({exercise, name, data, isSelected, onSelect, onPlay }) => 
 
 
 
-  const tamilNotationMap = {
-    1: "S",
-    2: "R₁",
-    3: "R₂",
-    4: "G₁",
-    5: "G₂",
-    6: "M₁",
-    7: "M₂ ",
-    8: "P",
-    9: "D₁",
-    10: "D₂",
-    11: "N₁",
-    12: "N₂'",
-    // Add more as needed
-  };
+const tamilNotationMap = {
+  1: "ஸ",
+  2: "ரி₁",
+  3: "ரி₂",
+  4: "க₁",
+  5: "க₂",
+  6: "ம₁",
+  7: "ம₂",
+  8: "ப",
+  9: "த₁",
+  10: "த₂",
+  11: "நி₁",
+  12: "நி₂",
+  // You can extend this as needed
+};
+
   
   const getTamilNotation = (midiNumber, rootMidi) => {
     const noteDiff = (midiNumber - rootMidi + 12) % 12;
@@ -309,7 +318,34 @@ const ExerciseCard = ({exercise, name, data, isSelected, onSelect, onPlay }) => 
     const octave = Math.floor(midiNumber / 12) - 1;
     return notes[midiNumber % 12] + octave;
   };
-
+  const getNoteRange = (notes) => {
+    if (!notes || notes.length === 0) return { start: 4, end: 6 }; // Default to octaves 4-6
+    
+    const midiNumbers = notes.map(note => note.midiNumber);
+    const lowestNote = Math.min(...midiNumbers);
+    const highestNote = Math.max(...midiNumbers);
+    
+    // Convert to octave numbers
+    const lowestOctave = Math.floor(lowestNote / 12) - 1;
+    const highestOctave = Math.floor(highestNote / 12) - 1;
+    
+    // Calculate the optimal 3-octave range to cover all notes
+    let startOctave = Math.max(lowestOctave - 1, 3); // Don't go below octave 3
+    let endOctave = startOctave + 2; // Show exactly 3 octaves
+    
+    // If the highest note is beyond our range, shift up
+    if (highestOctave > endOctave) {
+      endOctave = Math.min(highestOctave + 1, 6); // Don't go above octave 6
+      startOctave = Math.max(endOctave - 2, 3); // Maintain 3 octaves
+    }
+    
+    return {
+      start: startOctave,
+      end: endOctave,
+      lowestNote: lowestNote,
+      highestNote: highestNote
+    };
+  };
   // Enhanced audio context initialization
   const initAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -808,7 +844,10 @@ const clearAllKeyHighlights = () => {
         });
       });
       setMidiNotes(allMidiNotes);
-  
+      // Calculate and set the octave range based on the actual notes
+      const range = getNoteRange(allMidiNotes);
+      setOctaveRange(range);
+      
       const midiBpm = midi.header.tempos[0]?.bpm || 120;
       const midiTimeSignature = midi.header.timeSignatures[0]?.timeSignature || [4, 4];
   
@@ -1347,9 +1386,17 @@ const clearAllKeyHighlights = () => {
   </div>
 )}
       {/* Metronome Controls */}
+
+
       <div className="metronome-controls flex items-center justify-center gap-4 my-4">
+      <button
+  onClick={() =>setIsTamil(!isTamil)}
+  className="border  border-red-600   py-2 px-4 rounded-lg  transition-colors"
+>
+  {isTamil  ? 'த' : 'E'}
+</button>
         <div className="flex items-center gap-2">
-          <label className="font-semibold">Metronome:</label>
+          <label className="font-semibold text-xs">Metronome:</label>
           <button
             onClick={toggleMetronome}
             className={`px-3 py-1 rounded-md ${
@@ -1415,44 +1462,80 @@ const clearAllKeyHighlights = () => {
         )}
 
       </div>
+      <div className="octave-range-indicator">
+  Current range: Octave {octaveRange.start} to {octaveRange.end} 
+  (Notes: {midiToNoteName(octaveRange.lowestNote)} to {midiToNoteName(octaveRange.highestNote)})
+</div>
+     {/* Piano UI */}
+     <div className="piano8">
+  {/* White keys */}
+  {Array.from({ length: octaveRange.end - octaveRange.start + 1 }).map((_, octaveOffset) => {
+    const octave = octaveRange.start + octaveOffset;
+    return whiteKeys.map((key) => (
+      <div
+        key={`white-${key}-${octave}`}
+        className={`white-key8 key8 ${
+          activeKeys.includes(key + octave) ? "active" : ""
+        }`}
+        onMouseDown={() => handlePianoKeyMouseDown(key + octave)}
+        onMouseUp={() => handlePianoKeyMouseUp(key + octave)}
+        onTouchStart={() => handlePianoKeyMouseDown(key + octave)}
+        onTouchEnd={() => handlePianoKeyMouseUp(key + octave)}
+        data-note={key + octave}
+      >
+<div className="note-label">
+  {tamilNotation && isTamil ? (
+    <div className="tamil-notation">
+      {getTamilNotation(
+        noteToMidiNumber(key, octave),
+        noteToMidiNumber(rootNote, 4)
+      )}
+    </div>
+  ) : (
+    key + octave
+  )}
+</div>
 
-      {/* Piano UI */}
-      <div className="piano8">
-        {["4", "5","6"].map((octave) =>
-          whiteKeys.map((key) => (
-            <div
-              key={key + octave}
-              className={`white-key8 key8 ${
-                activeKeys.includes(key + octave) ? "active" : ""
-              }`}
-              onTouchStart={() => handlePianoKeyMouseDown(key + octave)}
-              onTouchEnd={() => handlePianoKeyMouseUp(key + octave)}
-              data-note={key + octave}
-            >
-              {key + octave}
-            </div>
-          ))
-        )}
 
-        {["4", "5","6"].map((octave,octaveIndex) =>
-          Object.entries(blackKeys).map(([key, pos]) => (
-            <div
-              key={key + octave}
-              className={`black-key8 key8 ${
-                activeKeys.includes(key + octave) ? "active" : ""
-              }`}
-              onTouchStart={() => handlePianoKeyMouseDown(key + octave)}
-              onTouchEnd={() => handlePianoKeyMouseUp(key + octave)}
-              data-note={key + octave}
-              style={{
-                left: `${(pos + octaveIndex * 7) * (100 / 21) + 3}%`,
-              }}
-            >
-              {key}
-            </div>
-          ))
-        )}
       </div>
+    ));
+  })}
+
+  {/* Black keys */}
+  {Array.from({ length: octaveRange.end - octaveRange.start + 1 }).map((_, octaveOffset) => {
+    const octave = octaveRange.start + octaveOffset;
+    return Object.entries(blackKeys).map(([key, pos]) => (
+      <div
+        key={`black-${key}-${octave}`}
+        className={`black-key8 key8 ${
+          activeKeys.includes(key + octave) ? "active" : ""
+        }`}
+        onMouseDown={() => handlePianoKeyMouseDown(key + octave)}
+        onMouseUp={() => handlePianoKeyMouseUp(key + octave)}
+        onTouchStart={() => handlePianoKeyMouseDown(key + octave)}
+        onTouchEnd={() => handlePianoKeyMouseUp(key + octave)}
+        data-note={key + octave}
+        style={{
+          left: `${(pos + octaveOffset * 7) * (100 / (7 * (octaveRange.end - octaveRange.start + 1))) + 2.5}%`,
+        }}
+      >
+<div className="note-label">
+  {tamilNotation && isTamil ? (
+    <div className="tamil-notation">
+      {getTamilNotation(
+        noteToMidiNumber(key, octave),
+        noteToMidiNumber(rootNote, 4)
+      )}
+    </div>
+  ) : (
+    <div>{key}</div>
+  )}
+</div>
+
+      </div>
+    ));
+  })}
+</div>
 
       {/* Action Buttons */}
       <div className="flex mt-2 gap-5 justify-center">
@@ -1518,31 +1601,32 @@ const clearAllKeyHighlights = () => {
           height: 220px;
           box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
         }
-        .white-key8 {
-          width: 14.28%;
-          height: 200px;
-          background: linear-gradient(145deg, #fff, #f0f0f0);
-          border: 1px solid #ccc;
-          border-radius: 0 0 6px 6px;
-          color: #333;
-          box-shadow: 2px 5px 10px rgba(0, 0, 0, 0.3);
-          margin-right: -1px;
-        }
-        .black-key8 {
-          width: 3.57%;
-          height: 120px;
-          background: linear-gradient(145deg, #222, #000);
-          color: #fff;
-          z-index: 1;
-          position: absolute;
-          border-radius: 0 0 4px 4px;
-          box-shadow: 3px 5px 10px rgba(0, 0, 0, 0.5);
-        }
+.white-key8 {
+  width: calc(100% / ${7 * (octaveRange.end - octaveRange.start + 1)});
+  height: 200px;
+  background: linear-gradient(145deg, #fff, #f0f0f0);
+  border: 1px solid #ccc;
+  border-radius: 0 0 6px 6px;
+  color: #333;
+  box-shadow: 2px 5px 10px rgba(0, 0, 0, 0.3);
+  margin-right: -1px;
+}
+
+.black-key8 {
+  width: calc(60% / ${7 * (octaveRange.end - octaveRange.start + 1)});
+  height: 120px;
+  background: linear-gradient(145deg, #222, #000);
+  color: #fff;
+  z-index: 1;
+  position: absolute;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 3px 5px 10px rgba(0, 0, 0, 0.5);
+}
         .key8 {
           display: flex;
           justify-content: center;
           align-items: flex-end;
-          font-size: 12px;
+          font-size: 10px;
           font-weight: bold;
           user-select: none;
           cursor: pointer;
