@@ -1391,7 +1391,7 @@ const clearAllKeyHighlights = () => {
       <div className="metronome-controls flex items-center justify-center gap-4 my-4">
       <button
   onClick={() =>setIsTamil(!isTamil)}
-  className="border  border-red-600   py-2 px-4 rounded-lg  transition-colors"
+  className="border  border-red-500   py-2 px-4 rounded-lg  transition-colors"
 >
   {isTamil  ? 'த' : 'E'}
 </button>
