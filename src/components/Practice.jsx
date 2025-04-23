@@ -1314,13 +1314,16 @@ const clearAllKeyHighlights = () => {
     
     <div className="space-x-2 flex flex-wrap bg-white">
       {(() => {
-        // Default musical parameters (4/4 time at 120 BPM)
         const defaultBPM = 120;
         const beatsPerBar = 4;
         const barDuration = beatsPerBar * (60 / defaultBPM);
-
-        // Create 4 bars
-        return Array.from({ length: 4 }).map((_, barIndex) => {
+        
+        // Calculate how many bars we need based on the last note's time
+        const lastNoteTime = Math.max(...midiNotes.map(n => n.time));
+        const totalBars = Math.ceil(lastNoteTime / barDuration);
+        
+        // Create all needed bars, not just 4
+        return Array.from({ length: Math.max(4, totalBars) }).map((_, barIndex) => {
           const barStart = barIndex * barDuration;
           const barEnd = (barIndex + 1) * barDuration;
           
@@ -1336,21 +1339,19 @@ const clearAllKeyHighlights = () => {
             );
           }
 
-          // Group notes by quantized time
           const timeSlots = {};
           barNotes.forEach(note => {
             const positionInBar = note.time - barStart;
-            const quantizedTime = (Math.round(positionInBar * 4) / 4);
+            // More precise quantization - adjust the multiplier for finer resolution
+            const quantizedTime = (Math.round(positionInBar * 8) / 8); // 8th notes
             
             timeSlots[quantizedTime] = timeSlots[quantizedTime] || [];
             timeSlots[quantizedTime].push(note);
           });
 
-          // Convert timeSlots to sorted array
           const sortedSlots = Object.entries(timeSlots)
             .sort((a, b) => a[0] - b[0]);
 
-          // Build bar content
           let barContent = [];
           sortedSlots.forEach(([time, notes], timeIndex) => {
             if (timeIndex > 0) {
@@ -1364,7 +1365,7 @@ const clearAllKeyHighlights = () => {
                 {notes.map((note, noteIndex) => (
                   <div key={noteIndex} className="text-center px-1">
                     <div className="font-medium">{note.name}</div>
-                    <div className="text-blue-600 ">
+                    <div className="text-blue-600">
                       {getTamilNotation(note.midiNumber, noteToMidiNumber(rootNote, 4))}
                     </div>
                   </div>
@@ -1376,7 +1377,7 @@ const clearAllKeyHighlights = () => {
           return (
             <div key={barIndex} className="flex items-center p-2 rounded">
               <div className="flex items-center border-r-2 border-black pr-3">
-                {barContent }
+                {barContent}
               </div>
             </div>
           );
@@ -1721,24 +1722,27 @@ const clearAllKeyHighlights = () => {
     color: #1d4ed8;
     text-decoration: underline;
   }
-    .notes-display {
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid #e5e7eb;
-  }
-  .notes-display::-webkit-scrollbar {
-    width: 6px;
-  }
-  .notes-display::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-  .notes-display::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 3px;
-  }
-  .notes-display::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
+.notes-display {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+}
+.notes-display .flex-wrap {
+  min-height: 300px; /* Ensure container is tall enough */
+}
+.notes-display::-webkit-scrollbar {
+  width: 8px;
+}
+.notes-display::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.notes-display::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+.notes-display::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
       `}</style>
     </div>
   );
