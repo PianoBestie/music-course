@@ -1,10 +1,10 @@
-import React, { useCallback, useState, useEffect, useRef } from "react";
+import { createClient } from '@supabase/supabase-js';
+import { Midi } from "@tonejs/midi";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useSelector } from "react-redux";
-import { Midi } from "@tonejs/midi";
-import * as Tone from 'tone';
-import { createClient } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
+import * as Tone from 'tone';
 // Initialize Supabase client
 const supabaseUrl = "https://aqtoehdipmlwnxgtoara.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxdG9laGRpcG1sd254Z3RvYXJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2OTkyODAsImV4cCI6MjA1OTI3NTI4MH0.Foh4jXzvRm7deYockdR2h1Amtz3tDfNUFad4JHZCJZg";
@@ -1462,10 +1462,7 @@ const clearAllKeyHighlights = () => {
         )}
 
       </div>
-      <div className="octave-range-indicator">
-  Current range: Octave {octaveRange.start} to {octaveRange.end} 
-  (Notes: {midiToNoteName(octaveRange.lowestNote)} to {midiToNoteName(octaveRange.highestNote)})
-</div>
+
      {/* Piano UI */}
      <div className="piano8">
   {/* White keys */}
