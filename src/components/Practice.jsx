@@ -69,6 +69,25 @@ const [midiNotes, setMidiNotes] = useState([]);
 const [rootNote, setRootNote] = useState("C"); // Default root note
 const [isLoading, setIsLoading] = useState(false);
 
+const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+useEffect(() => {
+  // Handler to update windowWidth on resize
+  const handleResize = () => {
+    setWindowWidth(window.innerWidth);
+  };
+
+  // Add event listener for window resize
+  window.addEventListener('resize', handleResize);
+
+  // Clean up event listener when component unmounts
+  return () => {
+    window.removeEventListener('resize', handleResize);
+  };
+}, []);
+
+// Adjust the left position dynamically based on the device's inner width
+const deviceAdjustment = innerWidth < 800 ? 97 : 98.5; // 97% for tabs, 99% for larger devices
 const [exercises, setExercises] = useState(() => {
   try {
     const savedExercises = localStorage.getItem('musicExercises');
@@ -1518,7 +1537,7 @@ const clearAllKeyHighlights = () => {
         onTouchEnd={() => handlePianoKeyMouseUp(key + octave)}
         data-note={key + octave}
         style={{
-          left: `${(pos + octaveOffset * 7) * (100 / (7 * (octaveRange.end - octaveRange.start + 1))) + 2.5}%`,
+          left: `${(pos + octaveOffset * 7) * (deviceAdjustment / (7 * (octaveRange.end - octaveRange.start + 1))) + 3.2}%`,
         }}
       >
 <div className="note-label">
