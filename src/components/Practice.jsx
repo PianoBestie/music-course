@@ -1314,21 +1314,23 @@ const clearAllKeyHighlights = () => {
     
     <div className="space-x-2 flex flex-wrap bg-white">
       {(() => {
-        const defaultBPM = 120;
-        const beatsPerBar = 4;
-        const barDuration = beatsPerBar * (60 / defaultBPM);
+        const beatsPerBar = timeSignature[0];
+        const noteValue = timeSignature[1];
+        const barDuration = beatsPerBar * (60 / bpm);
         
-        // Calculate how many bars we need based on the last note's time
-        const lastNoteTime = Math.max(...midiNotes.map(n => n.time));
-        const totalBars = Math.ceil(lastNoteTime / barDuration);
+        // Calculate total bars needed based on note end times
+        const lastNoteEnd = Math.max(...midiNotes.map(n => n.time + n.duration));
+        const totalBars = Math.ceil(lastNoteEnd / barDuration);
         
-        // Create all needed bars, not just 4
-        return Array.from({ length: Math.max(4, totalBars) }).map((_, barIndex) => {
+        // Create bars
+        return Array.from({ length: totalBars }).map((_, barIndex) => {
           const barStart = barIndex * barDuration;
           const barEnd = (barIndex + 1) * barDuration;
           
+          // Get notes that start within this bar OR overlap into this bar
           const barNotes = midiNotes.filter(note => 
-            note.time >= barStart && note.time < barEnd
+            (note.time >= barStart && note.time < barEnd) || // Starts in this bar
+            (note.time + note.duration > barStart && note.time < barEnd) // Overlaps into this bar
           );
 
           if (barNotes.length === 0) {
@@ -1339,11 +1341,13 @@ const clearAllKeyHighlights = () => {
             );
           }
 
+          // Group notes by their quantized start time within the bar
           const timeSlots = {};
           barNotes.forEach(note => {
-            const positionInBar = note.time - barStart;
-            // More precise quantization - adjust the multiplier for finer resolution
-            const quantizedTime = (Math.round(positionInBar * 8) / 8); // 8th notes
+            // Calculate position within this bar
+            const positionInBar = Math.max(0, note.time - barStart);
+            // Quantize to 8th notes for display
+            const quantizedTime = (Math.round(positionInBar * 8) / 8);
             
             timeSlots[quantizedTime] = timeSlots[quantizedTime] || [];
             timeSlots[quantizedTime].push(note);
