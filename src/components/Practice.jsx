@@ -101,10 +101,18 @@ const [exercises, setExercises] = useState(() => {
   // Default exercises if nothing in localStorage
   return {
     noteKnowledge: {
-      "bgm/song1": { 
-        midi_url: "/airtel.mid", 
+      "Airtel": { 
+        midi_url: "./airtel.mid", 
         mp3_url: null, 
-        pdf_url: "/airtel.pdf",
+        pdf_url: "./airtel.pdf",
+        root: "G",
+        movieName:  "", 
+        category: "noteKnowledge"
+      },
+      "Airtel2": { 
+        midi_url: "./airtel.mid", 
+        mp3_url: null, 
+        pdf_url: "./airtel.pdf",
         root: "G",
         movieName:  "", 
         category: "noteKnowledge"
@@ -173,8 +181,7 @@ const [octaveRange, setOctaveRange] = useState({
       });
     } catch (error) {
       console.error('Load exercises error:', error);
-      toast.error('Failed to load exercises. Please check your permissions.');
-      navigate('/login');
+
     } finally {
       setIsLoading(false);
     }

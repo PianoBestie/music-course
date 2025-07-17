@@ -12,7 +12,7 @@ const Home = () => {
       <div className="text-center mb-8 sm:mb-12">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-3 sm:mb-4">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-500">
-            Piano Bestie's Interactive Music Course
+            KeyVibes  Interactive Music Course
           </span>
         </h1>
         <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">

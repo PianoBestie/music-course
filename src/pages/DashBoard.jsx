@@ -37,7 +37,7 @@ const DashBoard = () => {
   <h1 className="text-3xl md:text-4xl font-poppins font-bold tracking-wide">
     Welcome to{" "}
     <span className="text-[#efed53] text-5xl font-montserrat">
-      Piano Bestie's Music Course
+      KeyVibes  Music Course
     </span>
   </h1>
   <p className="mt-2 md:text-xl text-md font-montserrat leading-relaxed">

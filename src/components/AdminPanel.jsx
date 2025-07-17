@@ -81,13 +81,12 @@ const AdminPanel = () => {
         };
       });
       setExercises({
-        noteKnowledge: noteExercises,
-        chordKnowledge: chordExercises,
+        noteKnowledge: noteExercises || "",
+        chordKnowledge: chordExercises || "",
       });
     } catch (error) {
       console.error("Load exercises error:", error);
-      toast.error("Failed to load exercises. Please check your permissions.");
-      navigate("/login");
+  
     } finally {
       setIsLoading(false);
     }

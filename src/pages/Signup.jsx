@@ -25,7 +25,7 @@ const Signup = () => {
   const paymentDetails = {
     amount: '599',
     upiId: 'dwaynedevaq96@okicici',
-    name: 'Piano Bestie',
+    name: 'KeyVibes ',
     note: '1-year piano course access'
   };
 
@@ -153,7 +153,7 @@ const Signup = () => {
             <div className="bg-white p-3 rounded-full shadow-md mb-3">
               <PianoIcon className="text-indigo-600 text-3xl" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Piano Bestie</h1>
+            <h1 className="text-2xl font-bold text-white">KeyVibes </h1>
             <p className="text-blue-100 mt-1">Start your musical journey</p>
           </div>
         </div>

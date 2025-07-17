@@ -30,7 +30,7 @@ googleProvider.addScope('email');
 // Enhanced configuration with error handling
 const configureFirebase = async () => {
   try {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       console.log('Firebase running in production mode');
       
       // Set persistence for production (local storage works better with GitHub Pages)
